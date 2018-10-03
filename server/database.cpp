@@ -23,7 +23,7 @@ void ServDb:: createConnection()
         qDebug() << "Can't create table: " << query.lastError().text();
     }
 }
-void ServDb:: IsHasClient(const QString& name)
+bool ServDb:: IsHasClient(const QString& name)
 {
     QSqlDatabase db = QSqlDatabase::database(m_serverDatabase);
     QSqlQuery query(db);
@@ -34,8 +34,9 @@ void ServDb:: IsHasClient(const QString& name)
     }
     if (!query.next())
     {
-        ServInsert(NULL, name);
+        return false;
     }
+    return true;
 }
 
 void ServDb:: ServInsert(int id, const QString &name)

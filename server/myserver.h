@@ -20,6 +20,7 @@ private:
     QTextEdit*  m_ptxt;
     quint16     m_nNextBlockSize;
     QList < QTcpSocket*> m_clientList;
+    QMap <QString ,QTcpSocket*> m_clientMap;
     std::unique_ptr<ServDb> m_sdb;
 
 private:

@@ -15,7 +15,7 @@ public:
     ServDb(const QString& dbName);
     void createConnection();
     void ServInsert(int id, const QString& name);
-    void IsHasClient(const QString& name);
+    bool IsHasClient(const QString& name);
     ~ServDb();
 private:
     static const char* m_serverDatabase;

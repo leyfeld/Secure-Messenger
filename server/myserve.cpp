@@ -44,7 +44,7 @@ MyServer::MyServer(int nPort, QWidget* pwgt /*=0*/) : QWidget(pwgt)
 /*virtual*/ void MyServer::slotNewConnection()
 {
     QTcpSocket* pClientSocket = m_ptcpServer->nextPendingConnection();
-     m_clientList.push_back(pClientSocket);
+    m_clientList.push_back(pClientSocket);
      m_sdb->createConnection();
     connect(pClientSocket, SIGNAL(disconnected()),
             pClientSocket, SLOT(deleteLater())
@@ -53,7 +53,7 @@ MyServer::MyServer(int nPort, QWidget* pwgt /*=0*/) : QWidget(pwgt)
             this,          SLOT(slotReadClient())
            );
 
-    sendToClient("Server Response: Connected!");
+   // sendToClient("Server Response: Connected!");
 }
 void MyServer::slotReadClient()
 {
@@ -81,9 +81,14 @@ void MyServer::slotReadClient()
     {
         str.clear();
         in >> str;
-        m_sdb->IsHasClient(str);
-        //m_sdb->ServInsert(NULL,str);
+        m_clientMap.insert(str, pClientSocket);
+        if(!m_sdb->IsHasClient(str))
+        {
+            m_sdb->ServInsert(NULL,str);
+        }
+
     }
+
         QString strMessage =
             time.toString() + " " + "Client has sended - " + str;
         m_ptxt->append(strMessage);
@@ -108,4 +113,5 @@ void MyServer::sendToClient(const QString& str)
     {
         cl->write(arrBlock);
     }
+
 }
