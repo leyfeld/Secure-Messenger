@@ -12,6 +12,7 @@ private:
     QTcpSocket* m_pTcpSocket;
     QTextEdit*  m_ptxtInfo;
     QLineEdit*  m_ptxtInput;
+    QLineEdit*  m_ptxtInputName;
     quint16     m_nNextBlockSize;
 
 public:
@@ -22,6 +23,7 @@ private slots:
     void slotError       (QAbstractSocket::SocketError);
     void slotSendToServer(                            );
     void slotConnected   (                            );
+    void slotRegistrationClient();
 };
 
 void ParsStr(const QString& line,QString& reg, QString& name);

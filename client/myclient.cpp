@@ -26,26 +26,32 @@ MyClient::MyClient(const QString& strHost,
 
     m_ptxtInfo  = new QTextEdit;
     m_ptxtInput = new QLineEdit;
+    m_ptxtInputName = new QLineEdit;
     m_ptxtInfo->setStyleSheet("QTextEdit"
                                 "{"
                                 "color: red;"
                                 "}");
     m_ptxtInput->setStyleSheet("QLineEdit { background: rgb(0, 255, 255); selection-background-color: rgb(233, 99, 0); }");
-
+    m_ptxtInputName->setStyleSheet("QLineEdit { background: blue; selection-background-color:  black; }");
+    connect(m_ptxtInputName, SIGNAL(returnPressed()),
+            this,        SLOT(slotRegistrationClient())
+           );
     connect(m_ptxtInput, SIGNAL(returnPressed()),
             this,        SLOT(slotSendToServer())
            );
     m_ptxtInfo->setReadOnly(true);
-
     QPushButton* pcmd = new QPushButton("&Send");
     connect(pcmd, SIGNAL(clicked()), SLOT(slotSendToServer()));
-
+    QPushButton* preg = new QPushButton("&Registration");
+    connect(preg, SIGNAL(clicked()), SLOT(slotRegistrationClient()));
     //Layout setup
     QVBoxLayout* pvbxLayout = new QVBoxLayout;
     pvbxLayout->addWidget(new QLabel("<H1>Client</H1>"));
     pvbxLayout->addWidget(m_ptxtInfo);
     pvbxLayout->addWidget(m_ptxtInput);
     pvbxLayout->addWidget(pcmd);
+    pvbxLayout->addWidget(m_ptxtInputName);
+    pvbxLayout->addWidget(preg);
     setLayout(pvbxLayout);
 }
 void MyClient::slotReadyRead()
@@ -86,13 +92,10 @@ void MyClient::slotError(QAbstractSocket::SocketError err)
 }
 void MyClient::slotSendToServer()
 {
-    QString reg;
-    QString name;
-    ParsStr( m_ptxtInput->text(), reg, name);
     QByteArray  arrBlock;
     QDataStream out(&arrBlock, QIODevice::WriteOnly);
     out.setVersion(QDataStream::Qt_4_2);
-    out << quint16(0) << QTime::currentTime() <<reg<<name;
+    out << quint16(0) << QTime::currentTime() << m_ptxtInput->text();
 
     out.device()->seek(0);
     out << quint16(arrBlock.size() - sizeof(quint16));
@@ -100,13 +103,22 @@ void MyClient::slotSendToServer()
     m_pTcpSocket->write(arrBlock);
     m_ptxtInput->setText("");
 }
+void MyClient::slotRegistrationClient()
+{
+    QString reg = "reg";
+    QByteArray  arrBlock;
+    QDataStream out(&arrBlock, QIODevice::WriteOnly);
+    out.setVersion(QDataStream::Qt_4_2);
+    out << quint16(0) << QTime::currentTime() << reg << m_ptxtInputName->text();
+
+    out.device()->seek(0);
+    out << quint16(arrBlock.size() - sizeof(quint16));
+
+    m_pTcpSocket->write(arrBlock);
+     m_ptxtInputName->setText("");
+}
 void MyClient::slotConnected()
 {
     m_ptxtInfo->append("Received the connected() signal");
 }
-void ParsStr(const QString& line,QString& reg, QString& name)
-{
-    QString newLine = line;
-    QTextStream input(&newLine, QIODevice::ReadOnly);
-    input >> reg >> name;
-}
+
