@@ -1,21 +1,26 @@
 #ifndef MYCLIENT_H
 #define MYCLIENT_H
-#include <QWidget>
+
+#include <QObject>
+#include <QVariant>
 #include <QTcpSocket>
+#include <QAbstractSocket>
+#include <QDataStream>
+#include <QTime>
 
-class QTextEdit;
-class QLineEdit;
-
-class MyClient : public QWidget {
-Q_OBJECT
+class MyClient : public QObject
+{
+    Q_OBJECT
 private:
     QTcpSocket* m_pTcpSocket;
-    QTextEdit*  m_ptxtInfo;
-    QLineEdit*  m_ptxtInput;
     quint16     m_nNextBlockSize;
-
+    QObject* textArea;
+    QObject* field1;
+    QObject* button;
 public:
-    MyClient(const QString& strHost, int nPort, QWidget* pwgt = 0) ;
+    MyClient(const QString& strHost, int nPort, QObject *myparent = nullptr);
+
+signals:
 
 private slots:
     void slotReadyRead   (                            );
@@ -23,7 +28,5 @@ private slots:
     void slotSendToServer(                            );
     void slotConnected   (                            );
 };
-
-void ParsStr(const QString& line,QString& reg, QString& name);
 
 #endif // MYCLIENT_H
