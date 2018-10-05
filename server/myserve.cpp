@@ -13,23 +13,16 @@
 
 
 
-MyServer::MyServer(int nPort, QWidget* pwgt /*=0*/) : QWidget(pwgt)
-                                                    , m_nNextBlockSize(0)
+MyServer::MyServer(int nPort, QWidget* pwgt /*=0*/) : QWidget(pwgt), m_nNextBlockSize(0)
 {
     m_sdb.reset(new ServDb("/Users/leyfeld/Documents/projects/databases/table2_db.db"));
     m_ptcpServer = new QTcpServer(this);
     if (!m_ptcpServer->listen(QHostAddress::Any, nPort)) {
-        QMessageBox::critical(0,
-                              "Server Error",
-                              "Unable to start the server:"
-                              + m_ptcpServer->errorString()
-                             );
+        QMessageBox::critical(0, "Server Error", "Unable to start the server:" + m_ptcpServer->errorString());
         m_ptcpServer->close();
         return;
     }
-    connect(m_ptcpServer, SIGNAL(newConnection()),
-            this,         SLOT(slotNewConnection())
-           );
+    connect(m_ptcpServer, SIGNAL(newConnection()), this, SLOT(slotNewConnection()));
 
     m_ptxt = new QTextEdit;
     m_ptxt->setReadOnly(true);
@@ -46,12 +39,8 @@ MyServer::MyServer(int nPort, QWidget* pwgt /*=0*/) : QWidget(pwgt)
     QTcpSocket* pClientSocket = m_ptcpServer->nextPendingConnection();
     m_clientList.push_back(pClientSocket);
      m_sdb->createConnection();
-    connect(pClientSocket, SIGNAL(disconnected()),
-            pClientSocket, SLOT(deleteLater())
-           );
-    connect(pClientSocket, SIGNAL(readyRead()),
-            this,          SLOT(slotReadClient())
-           );
+    connect(pClientSocket, SIGNAL(disconnected()), pClientSocket, SLOT(deleteLater()));
+    connect(pClientSocket, SIGNAL(readyRead()), this, SLOT(slotReadClient()));
 
    // sendToClient("Server Response: Connected!");
 }
@@ -88,16 +77,11 @@ void MyServer::slotReadClient()
         }
 
     }
-
         QString strMessage =
             time.toString() + " " + "Client has sended - " + str;
         m_ptxt->append(strMessage);
-
         m_nNextBlockSize = 0;
-
-        sendToClient(
-                     "Server Response: Received \"" + str + "\""
-                    );
+        sendToClient("Server Response: Received \"" + str + "\"");
     }
 }
 void MyServer::sendToClient(const QString& str)
