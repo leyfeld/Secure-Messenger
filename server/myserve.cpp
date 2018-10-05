@@ -9,13 +9,16 @@
 #include<QSqlError>
 #include<QSqlDatabase>
 #include <QSqlDriverPlugin>
+#include <QDir>
 
 
 
 
 MyServer::MyServer(int nPort, QWidget* pwgt /*=0*/) : QWidget(pwgt), m_nNextBlockSize(0)
 {
-    m_sdb.reset(new ServDb("/Users/leyfeld/Documents/projects/databases/table2_db.db"));
+    QString dbPath = QDir::currentPath() + "/server.db";
+    qDebug() << "Current Server Db path: " << dbPath;
+    m_sdb.reset(new ServDb(dbPath));
     m_ptcpServer = new QTcpServer(this);
     if (!m_ptcpServer->listen(QHostAddress::Any, nPort)) {
         QMessageBox::critical(0, "Server Error", "Unable to start the server:" + m_ptcpServer->errorString());
