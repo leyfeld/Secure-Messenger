@@ -31,10 +31,12 @@ CONFIG += c++11
 
 SOURCES += \
         main.cpp \
-    myserve.cpp \
-    database.cpp
+    database.cpp \
+    myserver.cpp
 
 HEADERS += \
     myserver.h \
-    database.h
+    database.h \
+    servererror.h \
+    clientlist.h
 

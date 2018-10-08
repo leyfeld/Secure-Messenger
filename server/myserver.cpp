@@ -1,4 +1,6 @@
 #include "myserver.h"
+#include "database.h"
+#include "servererror.h"
 #include <QVBoxLayout>
 #include <QMessageBox>
 #include <QLabel>
@@ -6,11 +8,13 @@
 #include <QList>
 #include <QSqlQuery>
 #include <QDebug>
-#include<QSqlError>
-#include<QSqlDatabase>
+#include <QSqlError>
+#include <QSqlDatabase>
 #include <QSqlDriverPlugin>
 #include <QDir>
-
+#include <QTcpServer>
+#include <QTextEdit>
+#include <QTcpSocket>
 
 
 
@@ -41,12 +45,20 @@ MyServer::MyServer(int nPort, QWidget* pwgt /*=0*/) : QWidget(pwgt), m_nNextBloc
 {
     QTcpSocket* pClientSocket = m_ptcpServer->nextPendingConnection();
     m_clientList.push_back(pClientSocket);
-     m_sdb->createConnection();
+    m_sdb->createConnection();
+    connect(pClientSocket, SIGNAL(disconnected()), this, SLOT(slotDeleteMap()));
     connect(pClientSocket, SIGNAL(disconnected()), pClientSocket, SLOT(deleteLater()));
     connect(pClientSocket, SIGNAL(readyRead()), this, SLOT(slotReadClient()));
 
    // sendToClient("Server Response: Connected!");
 }
+void MyServer::slotDeleteMap()
+{
+   QTcpSocket* pClientSocket = (QTcpSocket*)sender();
+   QString nameClient = m_clientMap.key(pClientSocket);
+   m_clientMap.remove(nameClient);
+}
+
 void MyServer::slotReadClient()
 {
     QTcpSocket* pClientSocket = (QTcpSocket*)sender();
@@ -56,7 +68,7 @@ void MyServer::slotReadClient()
     {
         if (!m_nNextBlockSize)
         {
-            if (pClientSocket->bytesAvailable() < sizeof(quint16))
+            if (pClientSocket->bytesAvailable() < static_cast<qint64>(sizeof(quint16)))
             {
                 break;
             }
@@ -69,22 +81,30 @@ void MyServer::slotReadClient()
         QTime   time;
         QString str;
         in >> time >> str;
-    if(str == "reg")
-    {
-        str.clear();
-        in >> str;
-        m_clientMap.insert(str, pClientSocket);
-        if(!m_sdb->IsHasClient(str))
+        if(str == "reg")
         {
-            m_sdb->ServInsert(NULL,str);
-        }
+            str.clear();
+            in >> str;
+            m_clientMap.insert(str, pClientSocket);
+            if(!m_sdb->IsHasClient(str))
+            {
+                m_sdb->ServInsert(0,str);
+            }
+            else
+            {
+                in << static_cast<qint8>(ServerError::NameInDbError);
+            }
 
-    }
-        QString strMessage =
-            time.toString() + " " + "Client has sended - " + str;
-        m_ptxt->append(strMessage);
-        m_nNextBlockSize = 0;
-        sendToClient("Server Response: Received \"" + str + "\"");
+        }
+        else if(str == "mes")
+        {
+            str.clear();
+            in >> str;
+            QString strMessage = time.toString() + " " + "Client has sended - " + str;
+            m_ptxt->append(strMessage);
+            m_nNextBlockSize = 0;
+            sendToClient("Server Response: Received \"" + str + "\"");
+        }
     }
 }
 void MyServer::sendToClient(const QString& str)
