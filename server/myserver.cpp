@@ -83,31 +83,41 @@ void MyServer::slotReadClient()
         in >> time >> str;
         if(str == "reg")
         {
+            QString login;
+            QString name;
+            QString password;
             str.clear();
-            in >> str;
-            m_clientMap.insert(str, pClientSocket);
-            if(!m_sdb->IsHasClient(str))
+            in >> login >> name >> password;
+            m_clientMap.insert(login, pClientSocket);
+            if(!m_sdb->IsHasClient(login))
             {
-                m_sdb->ServInsert(0,str);
+                m_sdb->ServInsert(login, name, password);
             }
             else
             {
                 in << static_cast<qint8>(ServerError::NameInDbError);
+                break;
             }
-
+            m_sdb->ChatList(m_clientMap, chatList);
         }
         else if(str == "mes")
         {
+            QString login;
             str.clear();
-            in >> str;
+            in >>login >>str;
             QString strMessage = time.toString() + " " + "Client has sended - " + str;
             m_ptxt->append(strMessage);
-            m_nNextBlockSize = 0;
-            sendToClient("Server Response: Received \"" + str + "\"");
+            if(!m_clientMap.contains(login))
+            {
+                in<<static_cast<qint8>(ServerError::LoginOffline);
+                break;
+            }
+            sendToClient("Server Response: Received \"" + str + "\"", m_clientMap.value(login));
         }
+        m_nNextBlockSize = 0;
     }
 }
-void MyServer::sendToClient(const QString& str)
+void MyServer::sendToClient(const QString& str, QTcpSocket* pSocket)
 {
     QByteArray  arrBlock;
     QDataStream out(&arrBlock, QIODevice::WriteOnly);
@@ -116,9 +126,6 @@ void MyServer::sendToClient(const QString& str)
 
     out.device()->seek(0);
     out << quint16(arrBlock.size() - sizeof(quint16));
-    for(auto cl:m_clientList)
-    {
-        cl->write(arrBlock);
-    }
+    pSocket->write(arrBlock);
 
 }

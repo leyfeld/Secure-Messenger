@@ -42,8 +42,10 @@ MyClient::MyClient(const QString& strHost,
     m_ptxtInfo->setReadOnly(true);
     QPushButton* pcmd = new QPushButton("&Send");
     connect(pcmd, SIGNAL(clicked()), SLOT(slotSendToServer()));
+    pcmd->setObjectName("mes");
     QPushButton* preg = new QPushButton("&Registration");
     connect(preg, SIGNAL(clicked()), SLOT(slotRegistrationClient()));
+    preg->setObjectName("reg");
     //Layout setup
     QVBoxLayout* pvbxLayout = new QVBoxLayout;
     pvbxLayout->addWidget(new QLabel("<H1>Client</H1>"));
@@ -92,10 +94,14 @@ void MyClient::slotError(QAbstractSocket::SocketError err)
 }
 void MyClient::slotSendToServer()
 {
+    QString mes = "mes";
+    QString name;
+    QString sms;
+    ParsStr2(m_ptxtInput->text(), name, sms);
     QByteArray  arrBlock;
     QDataStream out(&arrBlock, QIODevice::WriteOnly);
     out.setVersion(QDataStream::Qt_4_2);
-    out << quint16(0) << QTime::currentTime() << m_ptxtInput->text();
+    out << quint16(0) << QTime::currentTime() << mes<< name << sms;
 
     out.device()->seek(0);
     out << quint16(arrBlock.size() - sizeof(quint16));
@@ -106,19 +112,35 @@ void MyClient::slotSendToServer()
 void MyClient::slotRegistrationClient()
 {
     QString reg = "reg";
+    QString login;
+    QString name;
+    QString password;
+    ParsStr3(m_ptxtInputName->text(), login, name, password);
     QByteArray  arrBlock;
     QDataStream out(&arrBlock, QIODevice::WriteOnly);
     out.setVersion(QDataStream::Qt_4_2);
-    out << quint16(0) << QTime::currentTime() << reg << m_ptxtInputName->text();
+    out << quint16(0) << QTime::currentTime() << reg << login << name << password;
 
     out.device()->seek(0);
     out << quint16(arrBlock.size() - sizeof(quint16));
 
     m_pTcpSocket->write(arrBlock);
-     m_ptxtInputName->setText("");
+    m_ptxtInputName->setText("");
+}
+void ParsStr2(const QString& line, QString& name, QString& sms)
+{
+    QString newLine = line;
+    QTextStream input(&newLine, QIODevice::ReadOnly);
+    input >> name >> sms;
 }
 void MyClient::slotConnected()
 {
     m_ptxtInfo->append("Received the connected() signal");
+}
+void ParsStr3(const QString& line,QString& login, QString& name, QString& password)
+{
+    QString newLine = line;
+    QTextStream input(&newLine, QIODevice::ReadOnly);
+    input >> login >> name >> password;
 }
 

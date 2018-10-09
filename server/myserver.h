@@ -19,9 +19,10 @@ private:
     QList < QTcpSocket*> m_clientList;
     QMap <QString, QTcpSocket*> m_clientMap;
     std::unique_ptr<ServDb> m_sdb;
+    QVector<ClientList> chatList;
 
 private:
-    void sendToClient(const QString& str);
+    void sendToClient(const QString& str, QTcpSocket *pSocket);
 
 public:
     MyServer(int nPort, QWidget* pwgt = 0);
