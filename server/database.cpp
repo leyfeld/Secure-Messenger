@@ -37,7 +37,25 @@ bool ServDb:: IsHasClient(const QString& name)
     }
     return query.next();
 }
-
+bool ServDb:: LoginCheck(const QString& login,const QString& name, const QString& password)
+{
+    QSqlDatabase db = QSqlDatabase::database(m_serverDatabase);
+    QSqlQuery query(db);
+    query.exec(QString("select * from person where login = '%1'").arg(login));
+    if (!query.exec())
+    {
+        qDebug() << "Can't select person: " << query.lastError().text();
+        return false;
+    }
+    if (query.next())
+    {
+       if((name != query.value(2).toString())||(password != query.value(3).toString()))
+       {
+           return false;
+       }
+    }
+    return true;
+}
 void ServDb:: ServInsert(const QString &login, const QString &name, const QString &hashPassword)
 {
     if (!QSqlDatabase::contains(m_serverDatabase))
