@@ -1,6 +1,7 @@
 #include "myserver.h"
 #include "database.h"
 #include "servererror.h"
+#include "loginandsmsfunct.h"
 #include <QVBoxLayout>
 #include <QMessageBox>
 #include <QLabel>
@@ -79,31 +80,34 @@ void MyServer::slotReadClient()
             break;
         }
         QTime   time;
-        QString str;
-        in >> time >> str;
-        if(str == "reg")
+        int loginProtocol;
+        in >> time >> loginProtocol;
+        switch (loginProtocol)
         {
-            QString login;
-            QString name;
-            QString password;
-            str.clear();
-            in >> login >> name >> password;
-            m_clientMap.insert(login, pClientSocket);
-            if(!m_sdb->IsHasClient(login))
+            case 1: // если int = 1
             {
-                m_sdb->ServInsert(login, name, password);
+               QString login;
+               QString name;
+               QString password;
+               in >> login >> name >> password;
+               loginProtocol =  Registration(pClientSocket, m_clientMap, chatList, m_sdb.get(), login, name, password);
+               sendToClient(QString::number(loginProtocol), pClientSocket);
+               break;
             }
-            else
+            case 2:
             {
-                in << static_cast<qint8>(ServerError::NameInDbError);
+                QString login;
+                QString name;
+                QString password;
+                in >> login >> name >> password;
+                loginProtocol = Login(pClientSocket, m_clientMap, chatList, m_sdb.get(), login, name, password);
+                sendToClient(QString::number(loginProtocol), pClientSocket);
                 break;
             }
-            m_sdb->ChatList(m_clientMap, chatList);
-        }
-        else if(str == "mes")
-        {
+            case 3:
+            {
             QString login;
-            str.clear();
+            QString str;
             in >>login >>str;
             QString strMessage = time.toString() + " " + "Client has sended - " + str;
             m_ptxt->append(strMessage);
@@ -113,6 +117,7 @@ void MyServer::slotReadClient()
                 break;
             }
             sendToClient("Server Response: Received \"" + str + "\"", m_clientMap.value(login));
+            }
         }
         m_nNextBlockSize = 0;
     }

@@ -32,11 +32,14 @@ CONFIG += c++11
 SOURCES += \
         main.cpp \
     database.cpp \
-    myserver.cpp
+    myserver.cpp \
+    clientlist.cpp \
+    loginandsmsfunct.cpp
 
 HEADERS += \
     myserver.h \
     database.h \
     servererror.h \
-    clientlist.h
+    clientlist.h \
+    loginandsmsfunct.h
 
