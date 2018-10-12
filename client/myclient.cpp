@@ -9,11 +9,7 @@
 
 
 
-MyClient::MyClient(const QString& strHost,
-                   int            nPort,
-                   QWidget*       pwgt /*=0*/
-                  ) : QWidget(pwgt)
-                    , m_nNextBlockSize(0)
+MyClient::MyClient(const QString& strHost,int nPort, QWidget* pwgt /*=0*/) : QWidget(pwgt), m_nNextBlockSize(0)
 {
     m_pTcpSocket = new QTcpSocket(this);
 
@@ -27,10 +23,7 @@ MyClient::MyClient(const QString& strHost,
     m_ptxtInfo  = new QTextEdit;
     m_ptxtInput = new QLineEdit;
     m_ptxtInputName = new QLineEdit;
-    m_ptxtInfo->setStyleSheet("QTextEdit"
-                                "{"
-                                "color: red;"
-                                "}");
+    m_ptxtInfo->setStyleSheet("QTextEdit{color: red;}");
     m_ptxtInput->setStyleSheet("QLineEdit { background: rgb(0, 255, 255); selection-background-color: rgb(233, 99, 0); }");
     m_ptxtInputName->setStyleSheet("QLineEdit { background: blue; selection-background-color:  black; }");
     connect(m_ptxtInputName, SIGNAL(returnPressed()),
@@ -111,19 +104,20 @@ void MyClient::slotSendToServer()
 }
 void MyClient::slotRegistrationClient()
 {
-    QString reg = "reg";
-    QString login;
-    QString name;
-    QString password;
+    //QString reg = "reg";
+    QString login = "";
+    QString name = "";
+    QString password = "";
     ParsStr3(m_ptxtInputName->text(), login, name, password);
+    //RegistrationClient(login, name, password);
+    qint8 regProtocol = 2;
     QByteArray  arrBlock;
     QDataStream out(&arrBlock, QIODevice::WriteOnly);
     out.setVersion(QDataStream::Qt_4_2);
-    out << quint16(0) << QTime::currentTime() << reg << login << name << password;
+    out << quint16(0) << QTime::currentTime() << regProtocol << login << name << password;
 
     out.device()->seek(0);
     out << quint16(arrBlock.size() - sizeof(quint16));
-
     m_pTcpSocket->write(arrBlock);
     m_ptxtInputName->setText("");
 }
@@ -142,5 +136,17 @@ void ParsStr3(const QString& line,QString& login, QString& name, QString& passwo
     QString newLine = line;
     QTextStream input(&newLine, QIODevice::ReadOnly);
     input >> login >> name >> password;
+}
+
+void RegistrationClient(  QString& login, QString& name, QString& password)
+{
+    int regProtocol = 1;
+    QByteArray  arrBlock;
+    QDataStream out(&arrBlock, QIODevice::WriteOnly);
+    out.setVersion(QDataStream::Qt_4_2);
+    out << quint16(0) << QTime::currentTime() << regProtocol << login << name << password;
+
+    out.device()->seek(0);
+    out << quint16(arrBlock.size() - sizeof(quint16));
 }
 

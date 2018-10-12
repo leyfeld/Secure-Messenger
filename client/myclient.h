@@ -27,5 +27,6 @@ private slots:
 };
 void ParsStr2(const QString& line, QString& name, QString& sms);
 void ParsStr3(const QString& line, QString& login, QString& name, QString &password);
+void RegistrationClient (QString& login, QString& name, QString& password);
 
 #endif // MYCLIENT_H
