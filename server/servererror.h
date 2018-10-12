@@ -11,7 +11,9 @@ enum class ServerError
     ServerDisconnected =104,
     ClientDisconnected =105,
     LoginExists =106,
-    LoginOffline = 107
+    LoginOffline = 107,
+    IncorrectProtocol = 108,
+    IncorrectRegistration = 109
 };
 
 #endif // SERVERERROR_H

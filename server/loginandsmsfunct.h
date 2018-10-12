@@ -4,7 +4,7 @@
 #include "database.h"
 #include "servererror.h"
 
-enum class LoginAndSmsProtocol : int
+enum class LoginAndSmsProtocol
 {
     registration = 1,
     login = 2,
@@ -12,10 +12,10 @@ enum class LoginAndSmsProtocol : int
 
 };
 
-int Registration(QTcpSocket* pClientSocket, QMap <QString, QTcpSocket*>& m_clientMap, QVector<ClientList>& chatList,
+ServerError Registration(QTcpSocket* pClientSocket, QMap <QString, QTcpSocket*>& m_clientMap, QVector<ClientList>& chatList,
                  ServDb* m_sdb, QString& login, QString& name, QString& password);
 
 
-int Login(QTcpSocket* pClientSocket, QMap <QString, QTcpSocket*>& m_clientMap, QVector<ClientList>& chatList,
+ServerError Login(QTcpSocket* pClientSocket, QMap <QString, QTcpSocket*>& m_clientMap, QVector<ClientList>& chatList,
           ServDb* m_sdb, QString& login, QString& name, QString& password);
 #endif // LOGINANDSMSFUNCT_H

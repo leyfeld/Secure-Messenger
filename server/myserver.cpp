@@ -16,6 +16,7 @@
 #include <QTcpServer>
 #include <QTextEdit>
 #include <QTcpSocket>
+#include <QDataStream>
 
 
 
@@ -80,31 +81,31 @@ void MyServer::slotReadClient()
             break;
         }
         QTime   time;
-        int loginProtocol;
+        quint8 loginProtocol = 0;
         in >> time >> loginProtocol;
-        switch (loginProtocol)
+        switch (static_cast<LoginAndSmsProtocol>(loginProtocol))
         {
-            case 1: // если int = 1
+            case LoginAndSmsProtocol::registration: // если int = 1
             {
                QString login;
                QString name;
                QString password;
                in >> login >> name >> password;
-               loginProtocol =  Registration(pClientSocket, m_clientMap, chatList, m_sdb.get(), login, name, password);
-               sendToClient(QString::number(loginProtocol), pClientSocket);
+               ServerError status = Registration(pClientSocket, m_clientMap, chatList, m_sdb.get(), login, name, password);
+               sendToClient(QString::number(static_cast<int>(status)), pClientSocket);
                break;
             }
-            case 2:
+            case LoginAndSmsProtocol::login:
             {
                 QString login;
                 QString name;
                 QString password;
                 in >> login >> name >> password;
-                loginProtocol = Login(pClientSocket, m_clientMap, chatList, m_sdb.get(), login, name, password);
-                sendToClient(QString::number(loginProtocol), pClientSocket);
+                ServerError status = Login(pClientSocket, m_clientMap, chatList, m_sdb.get(), login, name, password);
+                sendToClient(QString::number(static_cast<int>(status)), pClientSocket);
                 break;
             }
-            case 3:
+            case LoginAndSmsProtocol::mes:
             {
             QString login;
             QString str;
