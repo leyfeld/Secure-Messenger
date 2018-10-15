@@ -22,10 +22,13 @@ private:
 
 public:
     tcpClient(const QString& strHost, int nPort, QObject *myparent = nullptr, QObject* ta=nullptr);
-    void SendToServer(const QString &             );
+    void SendMessageToServer(const QString &, const QString&            );
+    void SendRegistrationToServer(const QString &, const QString&, const QString& );
+    void SendLoginToServer(const QString &, const QString&);
 
 signals:
      void getMessage(const QString &);
+     void registrationError(int);
 
 
 public slots:

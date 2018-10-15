@@ -22,6 +22,16 @@ Item {
         id:mainColumn
         width: parent.width
         topPadding: Math.max(100, (parent.height)*0.33)
+        Text {
+            id: txtError
+            objectName: "txtError"
+            color: "#F44336"
+            text:qsTr(" ")
+            font.underline: false
+            font.bold: false
+            font.pixelSize: 16
+            anchors.horizontalCenter: parent.horizontalCenter
+        }
 
         TextField {
                 id: nameRegField

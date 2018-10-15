@@ -1,6 +1,7 @@
 QT += quick quickcontrols2
 QT+=network
 QT+=core
+QT+=sql
 CONFIG += c++11
 #TARGET = your_app
 #TEMPLATE = app
@@ -22,7 +23,8 @@ SOURCES += \
         main.cpp \
     main.cpp \
     tcpclient.cpp \
-    qmlconnect.cpp
+    qmlconnect.cpp \
+    database.cpp
 
 RESOURCES += \
     qml.qrc
@@ -40,4 +42,5 @@ else: unix:!android: target.path = /opt/$${TARGET}/bin
 
 HEADERS += \
     tcpclient.h \
-    qmlconnect.h
+    qmlconnect.h \
+    database.h

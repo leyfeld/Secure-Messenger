@@ -24,14 +24,18 @@ Item {
 
          TabButton
          {
-                id:home
+                id:btnChatList
                 text: qsTr("Chat List")
                 width: Math.max(100, bar.width / 2)
+                onClicked: {
+                    btnMessageList.text="Messages List"
+                }
 
          }
 
          TabButton
          {
+                  id: btnMessageList
                   text: qsTr("Messages List")
                   width: Math.max(100, bar.width / 2)
          }
@@ -63,6 +67,10 @@ Item {
                  anchors.top:Item.top
                  text: "Item " + (index + 1)
                  width: bar.width
+                 onClicked:{
+                     bar.currentIndex=1
+                     btnMessageList.text="Item " + (index + 1)
+                 }
              }
 
            }

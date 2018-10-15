@@ -40,26 +40,13 @@ void tcpClient::slotReadyRead()
         QString str;
         QString num;
         in >> time >> str;
-        qDebug()<<str;
-        int i=0;
-        while(str[i]!=' ')
-        {
-            num+=str[i];
-            i++;
-        }
+        if(str.toInt()>100 || str.toInt()==0)
+            emit registrationError(str.toInt());
+        qDebug()<<str.toInt();
+
         if(num=="3")
             emit getMessage(str);
-        //obj.fldLogin->setProperty("text", str);
-        //QObject* win=this->parent()->findChild<QObject*>("registerwin");
-        //if(str=="200")
-        {
 
-//            clEngine.load(QUrl(QStringLiteral("qrc:/main.qml")));
-//            if (!(clEngine.rootObjects().isEmpty()))
-//                clRoot = clEngine.rootObjects()[0];
-        }
-
-        //textArea->setProperty("text", time.toString() + " " + str);
         m_nNextBlockSize = 0;
     }
 }
@@ -77,13 +64,47 @@ void tcpClient::slotError(QAbstractSocket::SocketError err)
     qDebug()<<strError;
     //textArea->setProperty("text", strError);
 }
-void tcpClient::SendToServer(const QString & str)
+void tcpClient::SendMessageToServer(const QString & login, const QString & mes)
 {
     QByteArray  arrBlock;
+    quint8 actionNumber=3;
     QDataStream out(&arrBlock, QIODevice::WriteOnly);
     out.setVersion(QDataStream::Qt_4_2);
-    qDebug()<<str;
-    out << quint16(0) << QTime::currentTime()<<str;
+    qDebug()<<login<<" "<<mes;
+    out << quint16(0) << QTime::currentTime()<<actionNumber<<login<<mes;
+    out.device()->seek(0);
+    out << quint16(arrBlock.size() - sizeof(quint16));
+    qDebug()<<m_pTcpSocket;
+    m_pTcpSocket->write(arrBlock);
+    //fldLogin->property("text")="";
+   // fldPassword->property("text")="";
+}
+void tcpClient::SendRegistrationToServer(const QString & login,const QString & name,const QString & password )
+{
+    QByteArray  arrBlock;
+    quint8 actionNumber=1;
+    QDataStream out(&arrBlock, QIODevice::WriteOnly);
+    out.setVersion(QDataStream::Qt_4_2);
+    qDebug()<<login<<name<<password;
+    out << quint16(0) << QTime::currentTime()<<actionNumber
+        <<login<<name<<password;
+    out.device()->seek(0);
+    out << quint16(arrBlock.size() - sizeof(quint16));
+    qDebug()<<m_pTcpSocket;
+    m_pTcpSocket->write(arrBlock);
+    //fldLogin->property("text")="";
+   // fldPassword->property("text")="";
+}
+
+void tcpClient::SendLoginToServer(const QString & login,const QString & password )
+{
+    QByteArray  arrBlock;
+    quint8 actionNumber=2;
+    QDataStream out(&arrBlock, QIODevice::WriteOnly);
+    out.setVersion(QDataStream::Qt_4_2);
+    qDebug()<<login<<password;
+    out << quint16(0) << QTime::currentTime()<<actionNumber
+        <<login<<password;
     out.device()->seek(0);
     out << quint16(arrBlock.size() - sizeof(quint16));
     qDebug()<<m_pTcpSocket;

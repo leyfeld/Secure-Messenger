@@ -3,7 +3,11 @@
 
 #include <QObject>
 #include <QDebug>
+#include <QDir>
+#include <memory>
 #include "tcpclient.h"
+#include "database.h"
+
 
 class qmlConnect : public QObject
 {
@@ -15,9 +19,11 @@ private:
     QObject* btnEnter=nullptr;
     QObject* textArea=nullptr;
     QObject* fldText=nullptr;
+    QObject* txtError=nullptr;
     tcpClient* client;
+    std::unique_ptr <database> dbClient;
 public: 
-    qmlConnect(QObject *QMLObject=nullptr);
+    qmlConnect();
     void SetRootObj (QObject* RObject=nullptr);
 
 
@@ -30,6 +36,7 @@ public slots:
    void registrationForm();
    void messageForm();
    void slotReadMessage(const QString& str);
+   void slotRegistrationError(int);
 
 protected:
    QObject *viewer;
