@@ -1,4 +1,5 @@
 #include "myclient.h"
+#include "messageprotocol.h"
 #include <QTextEdit>
 #include <QLineEdit>
 #include <QPushButton>
@@ -7,31 +8,20 @@
 #include <QTime>
 #include <QTextStream>
 
-
-
-MyClient::MyClient(const QString& strHost,int nPort, QWidget* pwgt /*=0*/) : QWidget(pwgt), m_nNextBlockSize(0)
+MyClient::MyClient(const QString& strHost,int nPort, QWidget* pwgt /*=0*/) : QWidget(pwgt)
 {
-    m_pTcpSocket = new QTcpSocket(this);
-
-    m_pTcpSocket->connectToHost(strHost, nPort);
-    connect(m_pTcpSocket, SIGNAL(connected()), SLOT(slotConnected()));
-    connect(m_pTcpSocket, SIGNAL(readyRead()), SLOT(slotReadyRead()));
-    connect(m_pTcpSocket, SIGNAL(error(QAbstractSocket::SocketError)),
-            this,         SLOT(slotError(QAbstractSocket::SocketError))
-           );
-
+    InitProtocol(strHost, nPort);
     m_ptxtInfo  = new QTextEdit;
     m_ptxtInput = new QLineEdit;
     m_ptxtInputName = new QLineEdit;
+    m_ptxtInputReg = new QLineEdit;
     m_ptxtInfo->setStyleSheet("QTextEdit{color: red;}");
     m_ptxtInput->setStyleSheet("QLineEdit { background: rgb(0, 255, 255); selection-background-color: rgb(233, 99, 0); }");
-    m_ptxtInputName->setStyleSheet("QLineEdit { background: blue; selection-background-color:  black; }");
-    connect(m_ptxtInputName, SIGNAL(returnPressed()),
-            this,        SLOT(slotRegistrationClient())
-           );
-    connect(m_ptxtInput, SIGNAL(returnPressed()),
-            this,        SLOT(slotSendToServer())
-           );
+    m_ptxtInputReg->setStyleSheet("QLineEdit { background: blue; selection-background-color:  black; }");
+    m_ptxtInputName->setStyleSheet("QLineEdit { background: rgb(0, 255, 255); selection-background-color: rgb(233, 99, 0); }");
+    connect(m_ptxtInputReg, SIGNAL(returnPressed()),this, SLOT(slotRegistrationClient()));
+    connect(m_ptxtInput, SIGNAL(returnPressed()),this, SLOT(slotSendToServer()));
+    connect(m_ptxtInputName, SIGNAL(returnPressed()),this, SLOT(slotSendToServer()));
     m_ptxtInfo->setReadOnly(true);
     QPushButton* pcmd = new QPushButton("&Send");
     connect(pcmd, SIGNAL(clicked()), SLOT(slotSendToServer()));
@@ -44,82 +34,45 @@ MyClient::MyClient(const QString& strHost,int nPort, QWidget* pwgt /*=0*/) : QWi
     pvbxLayout->addWidget(new QLabel("<H1>Client</H1>"));
     pvbxLayout->addWidget(m_ptxtInfo);
     pvbxLayout->addWidget(m_ptxtInput);
-    pvbxLayout->addWidget(pcmd);
     pvbxLayout->addWidget(m_ptxtInputName);
+    pvbxLayout->addWidget(pcmd);
+    pvbxLayout->addWidget(m_ptxtInputReg);
     pvbxLayout->addWidget(preg);
     setLayout(pvbxLayout);
 }
-void MyClient::slotReadyRead()
+
+void MyClient::InitProtocol(const QString& strHost,int nPort)
 {
-    QDataStream in(m_pTcpSocket);
-    in.setVersion(QDataStream::Qt_4_2);
-    for (;;) {
-        if (!m_nNextBlockSize) {
-            if (m_pTcpSocket->bytesAvailable() < sizeof(quint16)) {
-                break;
-            }
-            in >> m_nNextBlockSize;
-        }
-
-        if (m_pTcpSocket->bytesAvailable() < m_nNextBlockSize) {
-            break;
-        }
-        QTime   time;
-        QString str;
-        in >> time >> str;
-
-        m_ptxtInfo->append(time.toString() + " " + str);
-        m_nNextBlockSize = 0;
-    }
+    m_chatProtocol.reset(new ChatProtocol(strHost, nPort));
+    connect(m_chatProtocol.get(), SIGNAL(SigReadyRead(QTime,QString)), this, SLOT(slotReadyRead(QTime,QString)));
+    connect(m_chatProtocol.get(), SIGNAL(SigErrorHappened(QString)), this, SLOT(slotError(QString)));
+    connect(m_chatProtocol.get(), SIGNAL(SigConnected()), this, SLOT(slotConnected()));
 }
-void MyClient::slotError(QAbstractSocket::SocketError err)
+void MyClient::slotReadyRead(const QTime& time, const QString& str)
 {
-    QString strError =
-        "Error: " + (err == QAbstractSocket::HostNotFoundError ?
-                     "The host was not found." :
-                     err == QAbstractSocket::RemoteHostClosedError ?
-                     "The remote host is closed." :
-                     err == QAbstractSocket::ConnectionRefusedError ?
-                     "The connection was refused." :
-                     QString(m_pTcpSocket->errorString())
-                    );
+    m_ptxtInfo->append(time.toString() + " " + str);
+}
+void MyClient::slotError(const QString& strError)
+{
     m_ptxtInfo->append(strError);
 }
 void MyClient::slotSendToServer()
 {
-    QString mes = "mes";
-    QString name;
-    QString sms;
-    ParsStr2(m_ptxtInput->text(), name, sms);
-    QByteArray  arrBlock;
-    QDataStream out(&arrBlock, QIODevice::WriteOnly);
-    out.setVersion(QDataStream::Qt_4_2);
-    out << quint16(0) << QTime::currentTime() << mes<< name << sms;
-
-    out.device()->seek(0);
-    out << quint16(arrBlock.size() - sizeof(quint16));
-
-    m_pTcpSocket->write(arrBlock);
+//    QString name;
+//    QString sms;
+//    ParsStr2(m_ptxtInput->text(), name, sms);
+    m_chatProtocol->SendMessageInfo(m_ptxtInputName->text(), m_ptxtInput->text());
     m_ptxtInput->setText("");
+    m_ptxtInputName->setText("");
 }
 void MyClient::slotRegistrationClient()
 {
-    //QString reg = "reg";
     QString login = "";
     QString name = "";
     QString password = "";
-    ParsStr3(m_ptxtInputName->text(), login, name, password);
-    //RegistrationClient(login, name, password);
-    qint8 regProtocol = 2;
-    QByteArray  arrBlock;
-    QDataStream out(&arrBlock, QIODevice::WriteOnly);
-    out.setVersion(QDataStream::Qt_4_2);
-    out << quint16(0) << QTime::currentTime() << regProtocol << login << name << password;
-
-    out.device()->seek(0);
-    out << quint16(arrBlock.size() - sizeof(quint16));
-    m_pTcpSocket->write(arrBlock);
-    m_ptxtInputName->setText("");
+    ParsStr3(m_ptxtInputReg->text(), login, name, password);
+    m_chatProtocol->SendRegistrationInfo(login, name, password);
+    m_ptxtInputReg->setText("");
 }
 void ParsStr2(const QString& line, QString& name, QString& sms)
 {
@@ -138,15 +91,8 @@ void ParsStr3(const QString& line,QString& login, QString& name, QString& passwo
     input >> login >> name >> password;
 }
 
-void RegistrationClient(  QString& login, QString& name, QString& password)
-{
-    int regProtocol = 1;
-    QByteArray  arrBlock;
-    QDataStream out(&arrBlock, QIODevice::WriteOnly);
-    out.setVersion(QDataStream::Qt_4_2);
-    out << quint16(0) << QTime::currentTime() << regProtocol << login << name << password;
 
-    out.device()->seek(0);
-    out << quint16(arrBlock.size() - sizeof(quint16));
-}
+
+
+
 

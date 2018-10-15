@@ -1,5 +1,5 @@
-! include( ../common.pri ) {
-    error( "Couldn't find the common.pri file!" )
+! include( ../project_config.pri ) {
+    error( "Couldn't find the project_config.pri file!" )
 }
 
 QT += gui
@@ -24,7 +24,13 @@ DEFINES += QT_DEPRECATED_WARNINGS
 
 SOURCES += \
         main.cpp \
-    myclient.cpp
+    myclient.cpp \
+    chatprotocol.cpp
 
 HEADERS += \
-    myclient.h
+    myclient.h \
+    chatprotocol.h
+
+LIBS += -lcommon -L$$OUT_PWD/../libs/
+
+INCLUDEPATH += ../common
