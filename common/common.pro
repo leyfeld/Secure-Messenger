@@ -1,14 +1,12 @@
-#-------------------------------------------------
-#
-# Project created by QtCreator 2018-10-12T08:48:11
-#
-#-------------------------------------------------
+! include( ../project_config.pri ) {
+    error( "Couldn't find the project_config.pri file!" )
+}
 
 QT       += sql
 
 QT       -= gui
 
-TARGET = common
+TARGET = ../libs/common
 TEMPLATE = lib
 CONFIG += staticlib
 
@@ -24,11 +22,11 @@ DEFINES += QT_DEPRECATED_WARNINGS
 #DEFINES += QT_DISABLE_DEPRECATED_BEFORE=0x060000    # disables all the APIs deprecated before Qt 6.0.0
 
 SOURCES += \
-        common.cpp
+        common.cpp \
+        clientlist.cpp
 
 HEADERS += \
-        common.h
-unix {
-    target.path = /usr/lib
-    INSTALLS += target
-}
+        common.h \
+        clientlist.h \
+        servererror.h \
+    messageprotocol.h

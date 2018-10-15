@@ -1,5 +1,5 @@
-! include( ../common.pri ) {
-    error( "Couldn't find the common.pri file!" )
+! include( ../project_config.pri ) {
+    error( "Couldn't find the project_config.pri file!" )
 }
 
 #-------------------------------------------------
@@ -33,13 +33,12 @@ SOURCES += \
         main.cpp \
     database.cpp \
     myserver.cpp \
-    clientlist.cpp \
     loginandsmsfunct.cpp
 
 HEADERS += \
     myserver.h \
     database.h \
-    servererror.h \
-    clientlist.h \
     loginandsmsfunct.h
 
+LIBS += -lcommon -L$$OUT_PWD/../libs/
+INCLUDEPATH += ../common
