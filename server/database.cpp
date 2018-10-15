@@ -37,7 +37,7 @@ bool ServDb:: IsHasClient(const QString& name)
     }
     return query.next();
 }
-bool ServDb:: LoginCheck(const QString& login,const QString& name, const QString& password)
+bool ServDb:: LoginCheck(const QString& login, const QString& password)
 {
     QSqlDatabase db = QSqlDatabase::database(m_serverDatabase);
     QSqlQuery query(db);
@@ -49,7 +49,7 @@ bool ServDb:: LoginCheck(const QString& login,const QString& name, const QString
     }
     if (query.next())
     {
-       if((name != query.value(2).toString())||(password != query.value(3).toString()))
+       if(password != query.value(3).toString())
        {
            return false;
        }

@@ -2,6 +2,7 @@
 #include "database.h"
 #include "servererror.h"
 #include "loginandsmsfunct.h"
+#include "messageprotocol.h"
 #include <QVBoxLayout>
 #include <QMessageBox>
 #include <QLabel>
@@ -92,38 +93,59 @@ void MyServer::slotReadClient()
                QString password;
                in >> login >> name >> password;
                ServerError status = Registration(pClientSocket, m_clientMap, chatList, m_sdb.get(), login, name, password);
+               if(status == ServerError::Success)
+               {
+                   sendToClient(chatList, pClientSocket);
+               }
                sendToClient(QString::number(static_cast<int>(status)), pClientSocket);
                break;
             }
             case LoginAndSmsProtocol::login:
             {
                 QString login;
-                QString name;
                 QString password;
-                in >> login >> name >> password;
-                ServerError status = Login(pClientSocket, m_clientMap, chatList, m_sdb.get(), login, name, password);
+                in >> login >> password;
+                ServerError status = Login(pClientSocket, m_clientMap, chatList, m_sdb.get(), login, password);
+                if(status == ServerError::Success)
+                {
+                    sendToClient(chatList, pClientSocket);
+                }
                 sendToClient(QString::number(static_cast<int>(status)), pClientSocket);
                 break;
             }
             case LoginAndSmsProtocol::mes:
             {
-            QString login;
-            QString str;
-            in >>login >>str;
-            QString strMessage = time.toString() + " " + "Client has sended - " + str;
-            m_ptxt->append(strMessage);
-            if(!m_clientMap.contains(login))
-            {
-                in<<static_cast<qint8>(ServerError::LoginOffline);
+                QString login;
+                QString str;
+                in >>login >> str;
+                QString strMessage = time.toString() + " " + "Client has sended - " + str;
+                m_ptxt->append(strMessage);
+                if(!m_clientMap.contains(login))
+                {
+                    in<<static_cast<qint8>(ServerError::LoginOffline);
+                    break;
+                }
+                const QString whosend = m_clientMap.key(pClientSocket);
+                sendToClient("Login " + whosend +": " + str, m_clientMap.value(login));
                 break;
             }
-            sendToClient("Server Response: Received \"" + str + "\"", m_clientMap.value(login));
-            }
+        case LoginAndSmsProtocol::sendFile:
+//            {
+//                QString partOfFile;
+//                QString end;
+//                in >> partOfFile >> end;
+//            }
+        case LoginAndSmsProtocol::fileInfo:
+        default:
+            throw std::runtime_error("not implemented switch LoginAndSmsProtocol");
+            break;
+
         }
         m_nNextBlockSize = 0;
     }
 }
-void MyServer::sendToClient(const QString& str, QTcpSocket* pSocket)
+template <typename T>
+void MyServer::sendToClient(const T& str, QTcpSocket* pSocket)
 {
     QByteArray  arrBlock;
     QDataStream out(&arrBlock, QIODevice::WriteOnly);

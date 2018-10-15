@@ -10,6 +10,7 @@ class QTextEdit;
 class QTcpSocket;
 class ServDb;
 
+
 class MyServer : public QWidget {
 Q_OBJECT
 private:
@@ -22,7 +23,8 @@ private:
     QVector<ClientList> chatList;
 
 private:
-    void sendToClient(const QString& str, QTcpSocket *pSocket);
+    template <typename T>
+    void sendToClient(const T &str, QTcpSocket *pSocket);
 
 public:
     MyServer(int nPort, QWidget* pwgt = 0);

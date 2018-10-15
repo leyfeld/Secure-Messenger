@@ -1,6 +1,7 @@
 TEMPLATE = subdirs
-SUBDIRS = client \
-          server \
-    common
+SUBDIRS = common \
+        client \
+        server
 
 CONFIG += ordered
+

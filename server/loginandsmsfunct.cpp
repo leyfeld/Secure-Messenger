@@ -25,17 +25,17 @@ ServerError Registration(QTcpSocket* pClientSocket, QMap <QString, QTcpSocket*>&
 
 ServerError Login(QTcpSocket* pClientSocket, QMap <QString, QTcpSocket*>& m_clientMap,
                                 QVector<ClientList> &chatList,
-                                ServDb* m_sdb, QString& login, QString& name, QString& password)
+                                ServDb* m_sdb, QString& login, QString& password)
 {
-    if((login.isNull())||(name.isNull())||(password.isNull()))
+    if((login.isNull())||(password.isNull()))
     {
         return ServerError::IncorrectProtocol;
     }
-    if((login.isEmpty())||(name.isEmpty())||(password.isEmpty()))
+    if((login.isEmpty())||(password.isEmpty()))
     {
         return ServerError::IncorrectLogin;
     }
-    if(!m_sdb->LoginCheck(login, name, password))
+    if(!m_sdb->LoginCheck(login, password))
     {
         return (ServerError::IncorrectLogin);
     }
