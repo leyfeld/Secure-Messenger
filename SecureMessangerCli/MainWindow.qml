@@ -36,6 +36,7 @@ Item {
          TabButton
          {
                   id: btnMessageList
+                  objectName: "btnMessageList"
                   text: qsTr("Messages List")
                   width: Math.max(100, bar.width / 2)
          }
@@ -64,13 +65,15 @@ Item {
                model: 40
                delegate: ItemDelegate
              {
+                 id:listClient
+                 objectName: "listClient"
                  anchors.top:Item.top
-                 text: "Item " + (index + 1)
+               //  text: "Item " + (index + 1)
                  width: bar.width
-                 onClicked:{
-                     bar.currentIndex=1
-                     btnMessageList.text="Item " + (index + 1)
-                 }
+//                 onClicked:{
+//                     bar.currentIndex=1
+//                     btnMessageList.text="Item " + (index + 1)
+//                 }
              }
 
            }

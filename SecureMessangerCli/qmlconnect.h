@@ -20,6 +20,8 @@ private:
     QObject* textArea=nullptr;
     QObject* fldText=nullptr;
     QObject* txtError=nullptr;
+    QObject* btnTabBar=nullptr;
+    QObject* listview=nullptr;
     tcpClient* client;
     std::unique_ptr <database> dbClient;
 public: 
@@ -37,6 +39,7 @@ public slots:
    void messageForm();
    void slotReadMessage(const QString& str);
    void slotRegistrationError(int);
+   void chatListChange(const QVector <ClientList> &);
 
 protected:
    QObject *viewer;

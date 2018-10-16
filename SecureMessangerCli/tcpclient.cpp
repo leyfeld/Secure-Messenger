@@ -38,16 +38,34 @@ void tcpClient::slotReadyRead()
         }
         QTime   time;
         QString str;
-        QString num;
-        in >> time >> str;
-        if(str.toInt()>100 || str.toInt()==0)
-            emit registrationError(str.toInt());
-        qDebug()<<str.toInt();
 
-        if(num=="3")
-            emit getMessage(str);
+        if(!EnterSuccess)
+        {
+            qDebug()<<"flagFalse";
+            in >> time >> str;
+            qDebug()<<str;
+            if(str.toInt()>100)
+            {
+                emit registrationError(str.toInt());
+            }
+            if(str.toInt()==0)
+            {
+                emit registrationError(str.toInt());
+                EnterSuccess=true;
+            }
+        }
+        else
+        {
+            qDebug()<<"flagTrue";
+            in>>time>>chatList;
+            EnterSuccess=false;
+            qDebug()<<chatList[0].m_login<<chatList[0].m_name<<chatList[0].m_online;
+            emit getClientList(chatList);
+            //qDebug()<<str.toInt();
+        }
+        qDebug()<<"end";
 
-        m_nNextBlockSize = 0;
+    m_nNextBlockSize=0;
     }
 }
 void tcpClient::slotError(QAbstractSocket::SocketError err)

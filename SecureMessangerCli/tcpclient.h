@@ -9,6 +9,7 @@
 #include <QTime>
 #include <QGuiApplication>
 #include <QQmlApplicationEngine>
+#include "clientlist.h"
 
 
 class tcpClient : public QObject
@@ -18,6 +19,8 @@ private:
     QTcpSocket* m_pTcpSocket;
     quint16     m_nNextBlockSize;
     QObject *   textArea;
+    QVector<ClientList> chatList;
+    bool EnterSuccess=false;
     //qmlConnect obj(myparent);
 
 public:
@@ -29,6 +32,7 @@ public:
 signals:
      void getMessage(const QString &);
      void registrationError(int);
+     void getClientList (const QVector <ClientList>&);
 
 
 public slots:

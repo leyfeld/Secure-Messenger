@@ -24,7 +24,8 @@ SOURCES += \
     main.cpp \
     tcpclient.cpp \
     qmlconnect.cpp \
-    database.cpp
+    database.cpp \
+    clientlist.cpp
 
 RESOURCES += \
     qml.qrc
@@ -43,4 +44,5 @@ else: unix:!android: target.path = /opt/$${TARGET}/bin
 HEADERS += \
     tcpclient.h \
     qmlconnect.h \
-    database.h
+    database.h \
+    clientlist.h
