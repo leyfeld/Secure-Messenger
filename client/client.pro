@@ -2,10 +2,11 @@
     error( "Couldn't find the project_config.pri file!" )
 }
 
-QT += gui
-QT += widgets
 QT += core
 QT += network
+QT += quick quickcontrols2
+QT+=network
+QT+=sql
 
 CONFIG += c++11
 TEMPLATE = app
@@ -24,11 +25,17 @@ DEFINES += QT_DEPRECATED_WARNINGS
 
 SOURCES += \
         main.cpp \
-    myclient.cpp \
-    chatprotocol.cpp
+    chatprotocol.cpp\
+    qmlconnect.cpp \
+    database.cpp
+RESOURCES += \
+    qml.qrc
+win32:RC_FILE = SMIcon.rc
+
 
 HEADERS += \
-    myclient.h \
+    qmlconnect.h \
+    database.h \
     chatprotocol.h
 
 LIBS += -lcommon -L$$OUT_PWD/../libs/

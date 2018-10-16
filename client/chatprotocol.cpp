@@ -1,5 +1,6 @@
 #include "chatprotocol.h"
 #include "messageprotocol.h"
+#include <QString>
 #include <QByteArray>
 #include <QTime>
 #include <QTcpSocket>
@@ -24,7 +25,7 @@ void ChatProtocol::Send(QByteArray& arrBlock, QDataStream& streamPtr)
     streamPtr << quint16(arrBlock.size() - sizeof(quint16));
     m_socket->write(arrBlock);
 }
-void ChatProtocol::SendRegistrationInfo(const QString& login,const QString& name, const QString& password)
+void ChatProtocol::SendRegistrationToServer(const QString& login,const QString& name, const QString& password)
 {
     QByteArray arrBlock;
     QDataStream outStream(&arrBlock, QIODevice::WriteOnly);
@@ -33,7 +34,7 @@ void ChatProtocol::SendRegistrationInfo(const QString& login,const QString& name
     Send(arrBlock, outStream);
 }
 
-void ChatProtocol::SendLoginInfo(const QString &login, const QString &password)
+void ChatProtocol::SendLoginToServer(const QString &login, const QString &password)
 {
     QByteArray arrBlock;
     QDataStream outStream(&arrBlock, QIODevice::WriteOnly);
@@ -42,7 +43,7 @@ void ChatProtocol::SendLoginInfo(const QString &login, const QString &password)
     Send(arrBlock, outStream);
 }
 
-void ChatProtocol::SendMessageInfo(const QString &name,const QString &sms)
+void ChatProtocol::SendMessageToClient(const QString &name,const QString &sms)
 {
     QByteArray arrBlock;
     QDataStream outStream(&arrBlock, QIODevice::WriteOnly);
@@ -139,9 +140,7 @@ void ChatProtocol::slotReadyRead()
         QTime   time;
         QString loginProtocol;
         in >> time >> loginProtocol;
-        emit SigReadyRead(time, loginProtocol);
-        m_nNextBlockSize = 0;
-        switch (static_cast<LoginAndSmsProtocol>(loginProtocol))
+        switch (static_cast<LoginAndSmsProtocol>(loginProtocol.toUInt()))
         {
             case LoginAndSmsProtocol::registration: // если int = 1
             {
@@ -157,21 +156,25 @@ void ChatProtocol::slotReadyRead()
                 emit SigAnswerLogin(static_cast<ServerError>(serAnswer.toUInt()));
                 break;
             }
+            case LoginAndSmsProtocol::sendChatList:
+            {
+                in >> chatList;
+                qDebug() << chatList[0].m_login<<chatList[0].m_name<<chatList[0].m_online;
+                emit SigGetClientList(chatList);
+                break;
+            }
             case LoginAndSmsProtocol::mes:
             {
-                QString serAnswer;
-                in >> serAnswer;
-                emit SigReadyRead(time, serAnswer);
-                break;
+             // break;
             }
             case LoginAndSmsProtocol::fileInfo:
             {
-                QString serAnswer;
-                QString filename;
-                qint64 size;
-                in >> serAnswer >>filename>> size ;
-                emit SigReadyRead(time, serAnswer);
-                break;
+//                QString serAnswer;
+//                QString filename;
+//                qint64 size;
+//                in >> serAnswer >>filename>> size ;
+//                emit SigReadyRead(time, serAnswer);
+//                break;
             }
         default:
             throw std::runtime_error("not implemented switch LoginAndSmsProtocol");

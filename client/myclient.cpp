@@ -61,7 +61,7 @@ void MyClient::slotSendToServer()
 //    QString name;
 //    QString sms;
 //    ParsStr2(m_ptxtInput->text(), name, sms);
-    m_chatProtocol->SendMessageInfo(m_ptxtInputName->text(), m_ptxtInput->text());
+    m_chatProtocol->SendMessageToClient(m_ptxtInputName->text(), m_ptxtInput->text());
     m_ptxtInput->setText("");
     m_ptxtInputName->setText("");
 }
@@ -71,7 +71,7 @@ void MyClient::slotRegistrationClient()
     QString name = "";
     QString password = "";
     ParsStr3(m_ptxtInputReg->text(), login, name, password);
-    m_chatProtocol->SendRegistrationInfo(login, name, password);
+    m_chatProtocol->SendRegistrationToServer(login, name, password);
     m_ptxtInputReg->setText("");
 }
 void ParsStr2(const QString& line, QString& name, QString& sms)

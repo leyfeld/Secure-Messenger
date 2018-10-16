@@ -77,8 +77,8 @@ void MyServer::slotReadClient()
             }
             in >> m_nNextBlockSize;
         }
-
-        if (pClientSocket->bytesAvailable() < m_nNextBlockSize) {
+        if (pClientSocket->bytesAvailable() < m_nNextBlockSize)
+        {
             break;
         }
         QTime   time;
@@ -86,76 +86,77 @@ void MyServer::slotReadClient()
         in >> time >> loginProtocol;
         switch (static_cast<LoginAndSmsProtocol>(loginProtocol))
         {
-            case LoginAndSmsProtocol::registration: // если int = 1
+        case LoginAndSmsProtocol::registration: // если int = 1
+        {
+            QString login;
+            QString name;
+            QString password;
+            in >> login >> name >> password;
+            ServerError status = Registration(pClientSocket, m_clientMap, chatList, m_sdb.get(), login, name, password);
+            sendToClient(QString::number(static_cast<quint8>(LoginAndSmsProtocol::registration)), QString::number(static_cast<int>(status)), pClientSocket);
+            if(status == ServerError::Success)
             {
-               QString login;
-               QString name;
-               QString password;
-               in >> login >> name >> password;
-               ServerError status = Registration(pClientSocket, m_clientMap, chatList, m_sdb.get(), login, name, password);
-               sendToClient(QString::number(static_cast<int>(LoginAndSmsProtocol::registration)), QString::number(static_cast<int>(status)), pClientSocket);
-               if(status == ServerError::Success)
-               {
-                   sendToClient(QString::number(static_cast<int>(LoginAndSmsProtocol::sendChatList)), chatList, pClientSocket);
-               }
-               break;
+                sendToClient(QString::number(static_cast<quint8>(LoginAndSmsProtocol::sendChatList)), chatList, pClientSocket);
             }
-            case LoginAndSmsProtocol::login:
+            break;
+        }
+        case LoginAndSmsProtocol::login:
+        {
+            QString login;
+            QString password;
+            in >> login >> password;
+            ServerError status = Login(pClientSocket, m_clientMap, chatList, m_sdb.get(), login, password);
+            sendToClient(QString::number(static_cast<quint8>(LoginAndSmsProtocol::login)),QString::number(static_cast<int>(status)), pClientSocket);
+            if(status == ServerError::Success)
             {
-                QString login;
-                QString password;
-                in >> login >> password;
-                ServerError status = Login(pClientSocket, m_clientMap, chatList, m_sdb.get(), login, password);
-                sendToClient(QString::number(static_cast<int>(LoginAndSmsProtocol::login)),QString::number(static_cast<int>(status)), pClientSocket);
-                if(status == ServerError::Success)
-                {
-                    sendToClient(QString::number(static_cast<int>(LoginAndSmsProtocol::sendChatList)), chatList, pClientSocket);
-                }
+                sendToClient(QString::number(static_cast<quint8>(LoginAndSmsProtocol::sendChatList)), chatList, pClientSocket);
                 break;
             }
-            case LoginAndSmsProtocol::mes:
+            break;
+        }
+        case LoginAndSmsProtocol::mes:
+        {
+            QString login;
+            QString str;
+            in >>login >> str;
+            QString strMessage = time.toString() + " " + "Client has sended - " + str;
+            m_ptxt->append(strMessage);
+            if(!m_clientMap.contains(login))
             {
-                QString login;
-                QString str;
-                in >>login >> str;
-                QString strMessage = time.toString() + " " + "Client has sended - " + str;
-                m_ptxt->append(strMessage);
-                if(!m_clientMap.contains(login))
-                {
-                    in<<static_cast<qint8>(ServerError::LoginOffline);
-                    break;
-                }
-                const QString whosend = m_clientMap.key(pClientSocket);
-                sendToClient(QString::number(static_cast<int>(LoginAndSmsProtocol::mes)),"Login " + whosend +": " + str, m_clientMap.value(login));
+                in<<static_cast<qint8>(ServerError::LoginOffline);
                 break;
             }
+            const QString whosend = m_clientMap.key(pClientSocket);
+            sendToClient(QString::number(static_cast<quint8>(LoginAndSmsProtocol::mes)),"Login " + whosend +": " + str, m_clientMap.value(login));
+            break;
+        }
         case LoginAndSmsProtocol::sendFile:
-            {
-//                QString partOfFile;
-//                QString end;
-//                QString login;
-//                in >> login >> partOfFile >> end;
-//                const QString whosend = m_clientMap.key(pClientSocket);
-//                sendToClient(QString::number(static_cast<int>(LoginAndSmsProtocol::sendFile)),whosend, partOfFile, end, m_clientMap.value(login));
-            }
+        {
+        //                QString partOfFile;
+        //                QString end;
+        //                QString login;
+        //                in >> login >> partOfFile >> end;
+        //                const QString whosend = m_clientMap.key(pClientSocket);
+        //                sendToClient(QString::number(static_cast<int>(LoginAndSmsProtocol::sendFile)),whosend, partOfFile, end, m_clientMap.value(login));
+        }
         case LoginAndSmsProtocol::fileInfo:
-            {
-//                QString filename;
-//                qint64 size;
-//                QString login;
-//                in>> login >> filename >> size;
-//                const QString whosend = m_clientMap.key(pClientSocket);
-//                LoginAndSmsProtocol status = LoginAndSmsProtocol::fileInfo;
-//                sendToClient(QString::number(static_cast<int>(status)), whosend, filename, size, m_clientMap.value(login));
-//                break;
-            }
+        {
+        //                QString filename;
+        //                qint64 size;
+        //                QString login;
+        //                in>> login >> filename >> size;
+        //                const QString whosend = m_clientMap.key(pClientSocket);
+        //                LoginAndSmsProtocol status = LoginAndSmsProtocol::fileInfo;
+        //                sendToClient(QString::number(static_cast<int>(status)), whosend, filename, size, m_clientMap.value(login));
+        //                break;
+        }
         default:
-            throw std::runtime_error("not implemented switch LoginAndSmsProtocol");
-
+        throw std::runtime_error("not implemented switch LoginAndSmsProtocol");
         }
         m_nNextBlockSize = 0;
     }
 }
+
 template <typename T>
 void MyServer::sendToClient(const QString& str2, const T& str, QTcpSocket* pSocket)
 {

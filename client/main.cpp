@@ -1,17 +1,25 @@
-#include <QApplication>
-#include "myclient.h"
+#include <QGuiApplication>
+#include <QQmlApplicationEngine>
+#include <QQuickStyle>
+#include <QWindow>
+#include <QQmlContext>
+#include "chatprotocol.h"
+#include "qmlconnect.h"
 
 int main(int argc, char *argv[])
 {
-    QApplication app(argc, argv);
-    try
-    {
-        MyClient client("localhost", 2323);
-        client.show();
-        return app.exec();
-    }
-    catch (const std::exception& ex)
-    {
-        qDebug() << ex.what();
-    }
+    QCoreApplication::setAttribute(Qt::AA_EnableHighDpiScaling);
+
+    QGuiApplication app(argc, argv);
+    QQuickStyle::setStyle("Material");
+    QQmlApplicationEngine engine;
+    qmlConnect obj;
+    engine.rootContext()->setContextProperty("qmlConnection", &obj);
+    engine.load(QUrl(QStringLiteral("qrc:/main.qml")));
+    if (engine.rootObjects().isEmpty())
+        return -1;
+    QObject* myroot = engine.rootObjects()[0];
+    obj.SetRootObj(myroot);
+    return app.exec();
 }
+
