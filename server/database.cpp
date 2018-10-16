@@ -53,8 +53,9 @@ bool ServDb:: LoginCheck(const QString& login, const QString& password)
        {
            return false;
        }
+       return true;
     }
-    return true;
+    return false;
 }
 void ServDb:: ServInsert(const QString &login, const QString &name, const QString &hashPassword)
 {
