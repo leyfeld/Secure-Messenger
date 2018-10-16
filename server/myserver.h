@@ -24,7 +24,9 @@ private:
 
 private:
     template <typename T>
-    void sendToClient(const T &str, QTcpSocket *pSocket);
+    void sendToClient(const QString& str2, const T& str, QTcpSocket* pSocket);
+    template <typename T>
+    void sendToClient(const QString& protocol,const QString& whosend ,const QString& array, const T& str, QTcpSocket* pSocket);
 
 public:
     MyServer(int nPort, QWidget* pwgt = 0);

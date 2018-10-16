@@ -6,7 +6,8 @@ enum class LoginAndSmsProtocol
     login = 2,
     mes = 3,
     fileInfo = 4,
-    sendFile = 5
+    sendFile = 5,
+    sendChatList = 6
 
 };
 #endif // MESSAGEPROTOCOL_H

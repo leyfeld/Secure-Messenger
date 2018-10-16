@@ -51,25 +51,27 @@ void ChatProtocol::SendMessageInfo(const QString &name,const QString &sms)
     Send(arrBlock, outStream);
 }
 
-void ChatProtocol::SendFileInfo(const QString& name, qint64 size)
+void ChatProtocol::SendFileInfo(const QString& login, const QString& name, qint64 size)
 {
     QByteArray arrBlock;
     QDataStream outStream(&arrBlock, QIODevice::WriteOnly);
     outStream.setVersion(QDataStream::Qt_4_2);
-    outStream << quint16(0) << QTime::currentTime() << static_cast<quint8>(LoginAndSmsProtocol::fileInfo) << name << size;
+    outStream << quint16(0) << QTime::currentTime() << static_cast<quint8>(LoginAndSmsProtocol::fileInfo)
+              << login << name << size;
     Send(arrBlock, outStream);
 }
 
-void ChatProtocol::SendFile(const QByteArray& array,const QString &endOrNext)
+void ChatProtocol::SendFile(const QString& login, const QByteArray& array,const QString &endOrNext)
 {
     QByteArray arrBlock;
     QDataStream outStream(&arrBlock, QIODevice::WriteOnly);
     outStream.setVersion(QDataStream::Qt_4_2);
-    outStream << quint16(0) << QTime::currentTime() << static_cast<quint8>(LoginAndSmsProtocol::sendFile) << array << endOrNext;
+    outStream << quint16(0) << QTime::currentTime() << static_cast<quint8>(LoginAndSmsProtocol::sendFile)
+              << login << array << endOrNext;
     Send(arrBlock, outStream);
 }
 
-void ChatProtocol::TransferFile(const QString &filename)
+void ChatProtocol::TransferFile(const QString& login, const QString &filename)
 {
     QFileInfo fi(filename);
     qint64 bytes_to_read = 1024;//1048576;//2*1024*102416*1024;//1*1024;//16*1024;
@@ -78,7 +80,7 @@ void ChatProtocol::TransferFile(const QString &filename)
     qint64 full_max_bytes = max_bytes;
     qint64 read_bytes = 0;
     QString str = "next";
-    SendFileInfo(filename, max_bytes);
+    SendFileInfo(login, filename, max_bytes);
     QFile file(filename);
     if(!file.open(QIODevice::ReadOnly))
     {
@@ -104,12 +106,12 @@ void ChatProtocol::TransferFile(const QString &filename)
             qDebug()<<"Socket disconnected error\n";
             break;
         }
-        SendFile(byteArray, str);
+        SendFile(login, byteArray, str);
         bytes_read += byteArray.size();
         if(!max_bytes)
         {
             QString str = "end";
-            SendFile(byteArray, str);
+            SendFile(login, byteArray, str);
         }
     }
     file.close();
@@ -135,12 +137,49 @@ void ChatProtocol::slotReadyRead()
             break;
         }
         QTime   time;
-        QString str;
-        in >> time >> str;
-        emit SigReadyRead(time, str);
+        QString loginProtocol;
+        in >> time >> loginProtocol;
+        emit SigReadyRead(time, loginProtocol);
+        m_nNextBlockSize = 0;
+        switch (static_cast<LoginAndSmsProtocol>(loginProtocol))
+        {
+            case LoginAndSmsProtocol::registration: // если int = 1
+            {
+                QString serAnswer;
+                in >> serAnswer;
+                emit SigAnswerReg(static_cast<ServerError>(serAnswer.toUInt()));
+                break;
+             }
+            case LoginAndSmsProtocol::login:
+            {
+                QString serAnswer;
+                in >> serAnswer;
+                emit SigAnswerLogin(static_cast<ServerError>(serAnswer.toUInt()));
+                break;
+            }
+            case LoginAndSmsProtocol::mes:
+            {
+                QString serAnswer;
+                in >> serAnswer;
+                emit SigReadyRead(time, serAnswer);
+                break;
+            }
+            case LoginAndSmsProtocol::fileInfo:
+            {
+                QString serAnswer;
+                QString filename;
+                qint64 size;
+                in >> serAnswer >>filename>> size ;
+                emit SigReadyRead(time, serAnswer);
+                break;
+            }
+        default:
+            throw std::runtime_error("not implemented switch LoginAndSmsProtocol");
+            break;
+        }
         m_nNextBlockSize = 0;
     }
-}
+ }
 void ChatProtocol::slotError(QAbstractSocket::SocketError err)
 {
     QString strError =
