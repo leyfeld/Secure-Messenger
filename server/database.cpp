@@ -1,4 +1,7 @@
 #include "database.h"
+#include "clientlist.h"
+
+
 
 const char* ServDb::m_serverDatabase = "ServerDatabase";
 
@@ -18,27 +21,43 @@ void ServDb:: createConnection()
         return;
     }
     QSqlQuery query(db);
-    if (!query.exec("create table if not exists person (id integer primary key autoincrement, firstname varchar(20))"))
+    if (!query.exec("create table if not exists person (id integer primary key autoincrement, login varchar(20), name varchar(20), hashPassword varchar(20))"))
     {
         qDebug() << "Can't create table: " << query.lastError().text();
     }
 }
-void ServDb:: IsHasClient(const QString& name)
+bool ServDb:: IsHasClient(const QString& name)
 {
     QSqlDatabase db = QSqlDatabase::database(m_serverDatabase);
     QSqlQuery query(db);
-    query.exec(QString("select * from person where firstname = '%1'").arg(name));
+    query.exec(QString("select * from person where login = '%1'").arg(name));
     if (!query.exec())
     {
         qDebug() << "Can't select person: " << query.lastError().text();
     }
-    if (!query.next())
-    {
-        ServInsert(NULL, name);
-    }
+    return query.next();
 }
-
-void ServDb:: ServInsert(int id, const QString &name)
+bool ServDb:: LoginCheck(const QString& login, const QString& password)
+{
+    QSqlDatabase db = QSqlDatabase::database(m_serverDatabase);
+    QSqlQuery query(db);
+    query.exec(QString("select * from person where login = '%1'").arg(login));
+    if (!query.exec())
+    {
+        qDebug() << "Can't select person: " << query.lastError().text();
+        return false;
+    }
+    if (query.next())
+    {
+       if(password != query.value(3).toString())
+       {
+           return false;
+       }
+       return true;
+    }
+    return false;
+}
+void ServDb:: ServInsert(const QString &login, const QString &name, const QString &hashPassword)
 {
     if (!QSqlDatabase::contains(m_serverDatabase))
     {
@@ -47,11 +66,41 @@ void ServDb:: ServInsert(int id, const QString &name)
     }
     QSqlDatabase db = QSqlDatabase::database(m_serverDatabase);
     QSqlQuery query(db);
-    query.prepare("INSERT INTO person (id, firstname) values(:id, :firstname)");
-    query.bindValue(":firstname", name);
+    query.prepare("INSERT INTO person (id, login, name, hashPassword) values(null, :login, :name, :hashPassword)");
+    query.bindValue(":login", login);
+    query.bindValue(":name", name);
+    query.bindValue(":hashPassword", hashPassword);
     if (!query.exec())
     {
         qDebug() << "Can't insert person: " << query.lastError().text();
+    }
+}
+
+void ServDb::ChatList(const QMap<QString, QTcpSocket*> &serverMap, QVector<ClientList>& chatList)
+{
+    bool flag=true;
+    QSqlDatabase db = QSqlDatabase::database(m_serverDatabase);
+    QSqlQuery query(db);
+    query.exec("select login, name from person");
+    if (!query.exec())
+    {
+        qDebug() << query.lastError().text();
+        return;
+    }
+    while(query.next())
+    {
+        QString login = query.value(0).toString();
+        QString name = query.value(1).toString();
+        bool online = serverMap.contains(login);
+        for(int i=0;i<chatList.size();i++)
+        {
+            if(login==chatList[i].m_login)
+                flag=false;
+        }
+        if (flag)
+        {
+            chatList.push_back({login, name, online});
+        }
     }
 }
 
