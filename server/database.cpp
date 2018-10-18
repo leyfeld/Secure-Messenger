@@ -78,6 +78,7 @@ void ServDb:: ServInsert(const QString &login, const QString &name, const QStrin
 
 void ServDb::ChatList(const QMap<QString, QTcpSocket*> &serverMap, QVector<ClientList>& chatList)
 {
+
     QSqlDatabase db = QSqlDatabase::database(m_serverDatabase);
     QSqlQuery query(db);
     query.exec("select login, name from person");
@@ -94,6 +95,7 @@ void ServDb::ChatList(const QMap<QString, QTcpSocket*> &serverMap, QVector<Clien
         chatList.push_back({login, name, online});
     }
 }
+
 
 ServDb::~ServDb()
 {

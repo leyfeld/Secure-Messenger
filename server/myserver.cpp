@@ -81,7 +81,7 @@ void MyServer::slotReadClient()
         {
             break;
         }
-        QTime   time;
+        QDateTime   time;
         quint8 loginProtocol = 0;
         in >> time >> loginProtocol;
         switch (static_cast<LoginAndSmsProtocol>(loginProtocol))
@@ -97,6 +97,7 @@ void MyServer::slotReadClient()
             if(status == ServerError::Success)
             {
                 sendToClient(QString::number(static_cast<quint8>(LoginAndSmsProtocol::sendChatList)), chatList, pClientSocket);
+                chatList.clear();
             }
             break;
         }
@@ -110,7 +111,7 @@ void MyServer::slotReadClient()
             if(status == ServerError::Success)
             {
                 sendToClient(QString::number(static_cast<quint8>(LoginAndSmsProtocol::sendChatList)), chatList, pClientSocket);
-                break;
+                chatList.clear();
             }
             break;
         }
@@ -127,28 +128,17 @@ void MyServer::slotReadClient()
                 break;
             }
             const QString whosend = m_clientMap.key(pClientSocket);
-            sendToClient(QString::number(static_cast<quint8>(LoginAndSmsProtocol::mes)),"Login " + whosend +": " + str, m_clientMap.value(login));
+            sendToClient(QString::number(static_cast<quint8>(LoginAndSmsProtocol::mes)),"From " + whosend + ":" +str, m_clientMap.value(login));
             break;
         }
         case LoginAndSmsProtocol::sendFile:
         {
-        //                QString partOfFile;
-        //                QString end;
-        //                QString login;
-        //                in >> login >> partOfFile >> end;
-        //                const QString whosend = m_clientMap.key(pClientSocket);
-        //                sendToClient(QString::number(static_cast<int>(LoginAndSmsProtocol::sendFile)),whosend, partOfFile, end, m_clientMap.value(login));
-        }
-        case LoginAndSmsProtocol::fileInfo:
-        {
-        //                QString filename;
-        //                qint64 size;
-        //                QString login;
-        //                in>> login >> filename >> size;
-        //                const QString whosend = m_clientMap.key(pClientSocket);
-        //                LoginAndSmsProtocol status = LoginAndSmsProtocol::fileInfo;
-        //                sendToClient(QString::number(static_cast<int>(status)), whosend, filename, size, m_clientMap.value(login));
-        //                break;
+            QVariant msgData;
+            QString login;
+            in >> login >> msgData;
+            const QString whosend = m_clientMap.key(pClientSocket);
+            sendToClient(QString::number(static_cast<int>(LoginAndSmsProtocol::sendFile)),whosend, msgData, m_clientMap.value(login));
+            break;
         }
         default:
         throw std::runtime_error("not implemented switch LoginAndSmsProtocol");
@@ -163,20 +153,20 @@ void MyServer::sendToClient(const QString& str2, const T& str, QTcpSocket* pSock
     QByteArray  arrBlock;
     QDataStream out(&arrBlock, QIODevice::WriteOnly);
     out.setVersion(QDataStream::Qt_4_2);
-    out << quint16(0) << QTime::currentTime() << str2 << str;
+    out << quint16(0) << QDateTime::currentDateTime() << str2 << str;
 
     out.device()->seek(0);
     out << quint16(arrBlock.size() - sizeof(quint16));
     pSocket->write(arrBlock);
 
 }
-template <typename T>
-void MyServer::sendToClient(const QString& protocol,const QString& whosend ,const QString& array, const T& str, QTcpSocket* pSocket)
+
+void MyServer::sendToClient(const QString& protocol,const QString& whosend ,const QVariant& msgData, QTcpSocket* pSocket)
 {
     QByteArray  arrBlock;
     QDataStream out(&arrBlock, QIODevice::WriteOnly);
     out.setVersion(QDataStream::Qt_4_2);
-    out << quint16(0) << QTime::currentTime() << protocol << whosend << array << str;
+    out << quint16(0) << QDateTime::currentDateTime() << protocol << whosend << msgData;
 
     out.device()->seek(0);
     out << quint16(arrBlock.size() - sizeof(quint16));
