@@ -5,6 +5,7 @@
 #include <QSqlDatabase>
 #include <QSqlTableModel>
 #include <QDebug>
+#include <QDateTime>
 #include <QSqlQuery>
 #include <QSqlError>
 
@@ -15,9 +16,11 @@ private:
     const char* cnDbSendMessage="dbClient";
 
 public:
-     database(const QString&);
+    database(const QString&);
     void CreateConnection();
-    void InsertMessage(const QString&, const QString& );
+    void InsertSendMessage(const QString&, const QString&, const QDateTime& );
+    void InsertReceiveMessage(const QString&, const QString&, const QDateTime& );
+    void GetMessage(const QString &, QVector<QString> &);
      ~database();
 
 

@@ -5,6 +5,9 @@
 #include <QQmlContext>
 #include "chatprotocol.h"
 #include "qmlconnect.h"
+#include <QFile>
+#include <QByteArray>
+
 
 int main(int argc, char *argv[])
 {

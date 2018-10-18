@@ -14,11 +14,11 @@ public:
     void SendRegistrationToServer(const QString& login, const QString& name, const QString& password);
     void SendLoginToServer(const QString& login,const QString& password);
     void SendMessageToClient(const QString &name, const QString &sms);
-    void SendFileInfo(const QString& login, const QString &name, qint64 size);
-    void SendFile(const QString &login, const QByteArray &array, const QString &endOrNext);
+    void SendFile(const QString &login, const QVariant &data);
     void TransferFile(const QString &login, const QString &filename);
+    void WriteAndReadFile(const QString& whosend, const QVariant &data);
 signals:
-    void SigGetMessage(const QString &str);
+    void SigGetMessage(const QString &login, const QString &message, const QDateTime &time);
     void SigErrorHappened(const QString& strError);
     void SigConnected();
     void SigAnswerReg(ServerError);
@@ -26,6 +26,7 @@ signals:
     void SigAnswerMessage(ServerError);
     void SigAnswerSendFile(ServerError);
     void SigGetClientList (const QVector <ClientList>&);
+    void SigGetFile(const QString &whosend, const QString &filename);
 private slots:
     void slotReadyRead();
     void slotError(QAbstractSocket::SocketError);

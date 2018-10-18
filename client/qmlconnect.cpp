@@ -1,17 +1,17 @@
 #include "qmlconnect.h"
 #include "chatprotocol.h"
+#include <QDateTime>
+
 qmlConnect::qmlConnect()
 {
     client.reset(new ChatProtocol ("localhost", 2323));
-    connect(client.get(), SIGNAL(SigGetMessage(const QString &)),this, SLOT(slotReadMessage(const QString &)));
-    connect(client.get(), SIGNAL(SigAnswerReg(ServerError)),this, SLOT(slotRegistrationError(ServerError)));
-    connect(client.get(), SIGNAL(SigAnswerLogin(ServerError)),this, SLOT(slotRegistrationError(ServerError)));
-    connect(client.get(), SIGNAL (SigGetClientList(const QVector <ClientList> & )),
-            this, SLOT(chatListChange(const QVector <ClientList> & )));
-    QString dbPath = QDir::currentPath() + "/dbClient.db";
-    qDebug() << "Current Server Db path: " << dbPath;
-    dbClient.reset(new database(dbPath));
-    dbClient->CreateConnection();
+        connect(client.get(), SIGNAL(SigGetMessage(const QString &, const QString &, const QDateTime)),this,
+                SLOT(slotReadMessage(const QString &, const QString &, const QDateTime& )));
+        connect(client.get(), SIGNAL(SigAnswerReg(ServerError)),this, SLOT(slotRegistrationError(ServerError)));
+        connect(client.get(), SIGNAL(SigAnswerLogin(ServerError)),this, SLOT(slotRegistrationError(ServerError)));
+        connect(client.get(), SIGNAL (SigGetClientList(const QVector <ClientList> & )),
+                this, SLOT(chatListChange(const QVector <ClientList> & )));
+
 }
 void qmlConnect::SetRootObj(QObject* RObj)
 {
@@ -29,6 +29,7 @@ void qmlConnect::enterForm()
     log=(fldLogin->property("text")).toString();
     password=(fldPassword->property("text")).toString();
     qDebug()<<log<<" "<<password;
+    myLogin=log;
     client->SendLoginToServer(log,password);
 }
 
@@ -47,6 +48,7 @@ void qmlConnect::registrationForm()
     log=(fldLogin->property("text")).toString();
     password=(fldPassword->property("text")).toString();
     qDebug()<<vName<<" "<<log<<" "<<password;
+    myLogin=log;
     client->SendRegistrationToServer(log,vName,password);
 
 }
@@ -54,18 +56,30 @@ void qmlConnect::registrationForm()
 void qmlConnect::messageForm()
 {
     qDebug()<<"We are in Messanger";
-    btnTabBar=viewer->findChild<QObject*>("btnMessageList");
-    fldText=viewer->findChild<QObject*>("field1");
-    textArea=viewer->findChild<QObject*>("textArea");
+        btnTabBar=viewer->findChild<QObject*>("btnMessageList");
+        fldText=viewer->findChild<QObject*>("field1");
+        QString log, message;
+        log=(btnTabBar->property("text")).toString();
+        message=(fldText->property("text")).toString();
+        dbClient->InsertSendMessage(log, message, QDateTime::currentDateTime());
+        qDebug()<<" "<<log<<" "<<message;
+        client->SendMessageToClient(log,message);
 
+}
+void qmlConnect::messageList(const QString & log)
+{
+    dbClient->GetMessage(log, mesList);
+    qDebug()<<mesList.size();
+    bool flag;
+    if(mesList[0]=="0")
+        flag=false;
+    else flag=true;
+    for(int i=1;i<mesList.size();i++)
+    {
+        emit toPrevMessageList(mesList[i],flag);
+        flag=!flag;
+    }
 
-    QString log, message;
-
-    log=(btnTabBar->property("text")).toString();
-    message=(fldText->property("text")).toString();
-    dbClient->InsertMessage(log, message);
-    qDebug()<<" "<<log<<" "<<message;
-    client->SendMessageToClient(log,message);
 }
 void qmlConnect::slotRegistrationError(ServerError errorCode)
 {
@@ -73,10 +87,16 @@ void qmlConnect::slotRegistrationError(ServerError errorCode)
     switch(errorCode)
     {
         case ServerError::Success:
-        //qDebug()<<"Everything is ok";
-        emit toMessanger();
-        break;
-    case ServerError::NameInDbError: txtError->setProperty("text","К сожалению, такой логин уже существует!");
+        {
+        QString dbPath = QDir::currentPath() + "/dbClient"+myLogin+".db";
+        qDebug() << "Current Server Db path: " << dbPath;
+        dbClient.reset(new database(dbPath));
+
+            dbClient->CreateConnection();
+            emit toMessanger();
+            break;
+        }
+        case ServerError::NameInDbError: txtError->setProperty("text","К сожалению, такой логин уже существует!");
         break;
         case ServerError::IncorrectLogin: txtError->setProperty("text","Неправильный логин или пароль!");
         break;
@@ -86,12 +106,17 @@ void qmlConnect::slotRegistrationError(ServerError errorCode)
 }
 void qmlConnect::chatListChange(const QVector <ClientList>& chatList)
 {
-    qDebug()<<"Here we are!";
+    qDebug()<<"Here we are!"<<chatList.size();
+    for(int i=0;i<chatList.size();i++)
+    {
+        emit toChatList(chatList[i].m_login, chatList[i].m_online);
+    }
 //    listview=viewer->findChild<QObject*>("listClient");
 //    listview->setProperty("text", " ");
 }
-void qmlConnect::slotReadMessage(const QString& str)
+void qmlConnect::slotReadMessage(const QString& log, const QString& mes, const QDateTime & time)
 {
-    textArea=viewer->findChild<QObject*>("textArea");
-    textArea->setProperty("text",str);
+    qDebug()<<log<<mes<<time;
+    dbClient->InsertReceiveMessage(log, mes, time);
+    emit toMessageList(mes);
 }

@@ -39,5 +39,5 @@ HEADERS += \
     chatprotocol.h
 
 LIBS += -lcommon -L$$OUT_PWD/../libs/
-
+message($$OUT_PWD);
 INCLUDEPATH += ../common
