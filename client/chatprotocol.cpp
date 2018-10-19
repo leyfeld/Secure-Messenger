@@ -67,7 +67,7 @@ void ChatProtocol::SendFile(const QString& login, const QVariant &data)
 void ChatProtocol::TransferFile(const QString& login, const QString &filename)
 {
     QFileInfo fi(filename);
-    qint64 bytes_to_read = 1024;//1048576;//2*1024*102416*1024;//1*1024;//16*1024;
+    qint64 bytes_to_read = 150;//1048576;//2*1024*102416*1024;//1*1024;//16*1024;
     qint64 bytes_read = 0;
     qint64 max_bytes = fi.size();
     qint64 full_max_bytes = max_bytes;
@@ -138,13 +138,13 @@ void ChatProtocol::WriteAndReadFile(const QString& whosend, const QVariant& data
         endOrNext = val.value("ISEND").toString();
     }
     QString new_dir = QFileInfo(filename).fileName();
-    filename =QDir::currentPath() + new_dir;
+    filename =QDir::currentPath() + "/" + new_dir;
 //    qDebug() << "Current File path: " <<  filename;
     if(size > 0)
     {
         QFile file(filename);
 //        qDebug() << "Current File open path: " <<  filename;
-        if(!file.open(QIODevice::ReadWrite))
+        if(!file.open(QIODevice::Append | QIODevice::Unbuffered))
         {
             qDebug() << "Can't write to file '" << filename;
         }

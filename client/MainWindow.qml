@@ -209,7 +209,7 @@ Item {
                    Button {
                                id: button
                                objectName: "button"
-                               text: qsTr("Отправить")
+                               text: qsTr("Send")
                                Material.background: "#FFF59D"
                                anchors.right: parent.right
                                anchors.bottom: parent.bottom
