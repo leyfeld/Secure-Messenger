@@ -31,7 +31,8 @@ void ChatProtocol::SendRegistrationToServer(const QString& login,const QString& 
     QByteArray arrBlock;
     QDataStream outStream(&arrBlock, QIODevice::WriteOnly);
     outStream.setVersion(QDataStream::Qt_4_2);
-    outStream << quint16(0) << QTime::currentTime() << static_cast<quint8>(LoginAndSmsProtocol::registration) << login << name << password;
+    outStream << quint16(0) << QDateTime::currentDateTime() << static_cast<quint8>(LoginAndSmsProtocol::registration) << login << name << password;
+    qDebug()<<static_cast<quint8>(LoginAndSmsProtocol::registration) << login << name << password;
     Send(arrBlock, outStream);
 }
 
@@ -52,7 +53,14 @@ void ChatProtocol::SendMessageToClient(const QString &name,const QString &sms)
     outStream << quint16(0) << QDateTime::currentDateTime() << static_cast<quint8>(LoginAndSmsProtocol::mes) << name << sms;
     Send(arrBlock, outStream);
 }
-
+void ChatProtocol::SendRefreshChatList()
+{
+    QByteArray arrBlock;
+    QDataStream outStream(&arrBlock, QIODevice::WriteOnly);
+    outStream.setVersion(QDataStream::Qt_4_2);
+    outStream << quint16(0) << QDateTime::currentDateTime() << static_cast<quint8>(LoginAndSmsProtocol::sendChatList);
+    Send(arrBlock, outStream);
+}
 void ChatProtocol::SendFileInfo(const QString& login, const QString& name, qint64 size)
 {
     QByteArray arrBlock;
@@ -174,11 +182,15 @@ void ChatProtocol::slotReadyRead()
                 {
                     i++;
                 }
+                i++;
                 while(message[i]!=':')
                 {
+
                     log+=message[i];
                     i++;
+
                 }
+                qDebug()<<log;
                 emit SigGetMessage(log, message, time);
                 break;
             }

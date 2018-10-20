@@ -19,6 +19,7 @@ Item {
     Connections{
         target: qmlConnection;
         onToChatList:{
+
             listModel.append({itemText:log, clrItem:(offOn==true)? "#FFC107" : "#414037"})
 
         }
@@ -29,7 +30,7 @@ Item {
         }
         onToPrevMessageList:{
             lmMessage.append({txtMessage:mes,
-                                 lmMessage:(num==true)? 20 : 400})
+                                 lmMessage:(direction=="to")? 400 : 20})
         }
     }
 
@@ -55,7 +56,38 @@ Item {
                 id:btnChatList
                 text: qsTr("Chat List")
                 width: Math.max(100, bar.width / 2)
+                Image{
+                    id: iRefresh
+                    source: "pics/Refresh_pic_2.png"
+                    width: Math.max((parent.height)*0.6)
+                    height:Math.max((parent.height)*0.6)
+                    anchors.verticalCenter: parent.verticalCenter
+                    anchors.right:parent.right
+                    anchors.rightMargin: 20
+                    MouseArea {
+                        id: maRefresh
+                        anchors.fill: parent
+                        hoverEnabled: true
+                        onClicked:
+                        {
+                            listModel.clear()
+                            qmlConnection.refreshChatList();
+
+                        }
+
+                        onEntered:
+                        {
+                            iRefresh.source="pics/Refresh_pic_1.png"
+                        }
+                        onExited:
+                        {
+                            iRefresh.source= "pics/Refresh_pic_2.png"
+                        }
+                    }
+                }
+
                 onClicked: {
+                    lmMessage.clear();
                     btnMessageList.text="Messages List"
                 }
 
@@ -160,6 +192,7 @@ Item {
                  width: 640
                  clip: true
                  anchors.top: parent.top
+                 anchors.topMargin: 10
                  model: ListModel{
                      id: lmMessage
                  }
@@ -170,22 +203,31 @@ Item {
                    objectName: "iMessage"
                    anchors.left: parent.left
                    anchors.right: parent.right
-                   height: 40
+                   height: Math.max(txtIMessage.contentHeight * 1.5)
                    //clip:true
-                  Text
-                  {
-                   id: txtIMessage
-                   width:200
-                   wrapMode: Text.Wrap
-                   //property alias txtIMessage: txtIMessage
-                   color: "#414037"
-                   text: txtMessage
-                   font.underline: false
-                   font.bold: false
-                   font.pixelSize: 16
-                   anchors.left: parent.left;
-                   anchors.leftMargin: lmMessage
-                   topPadding: 10
+                  Rectangle{
+                      anchors.left: parent.left;
+                      anchors.leftMargin: lmMessage
+                      width:220
+                      height:Math.max(parent.height*0.85)
+                      color:"#EEEEEE"
+                      border.color: "#FFF59D"
+                      border.width:1
+                      radius:10
+                    Text
+                    {
+                        id: txtIMessage
+                        width:200
+                        wrapMode: Text.Wrap
+                        //property alias txtIMessage: txtIMessage
+                        color: "#414037"
+                        text: txtMessage
+                        font.underline: false
+                        font.bold: false
+                        font.pixelSize: 16
+                        topPadding: Math.max((parent.height-contentHeight)/2)
+                        leftPadding: 10
+                    }
                   }
              }
 

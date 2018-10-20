@@ -8,6 +8,7 @@
 #include <QDateTime>
 #include <QSqlQuery>
 #include <QSqlError>
+#include "messagelist.h"
 
 class database
 {
@@ -21,7 +22,7 @@ public:
     void CreateConnection();
     void InsertSendMessage(const QString&, const QString&, const QDateTime& );
     void InsertReceiveMessage(const QString&, const QString&, const QDateTime& );
-    void GetMessage(const QString &, QVector<QString> &);
+    void GetMessage(const QString &, QVector<Messagelist> &);
      ~database();
 
 

@@ -7,6 +7,7 @@
 #include <memory>
 #include "chatprotocol.h"
 #include "database.h"
+#include "messagelist.h"
 
 
 class qmlConnect : public QObject
@@ -24,20 +25,22 @@ private:
     std::unique_ptr <database> dbClient;
 public: 
     qmlConnect();
-    QVector <QString> mesList;
+    QVector <Messagelist> mesList;
     void SetRootObj (QObject* RObject=nullptr);
+    void OpenClientDB();
 
 
 signals:
     void toMessanger();
     void toChatList(const QString & log, const bool & offOn);
-    void toPrevMessageList(const QString & mes, const bool & num);
+    void toPrevMessageList(const QString & direction, const QString & mes);
     void toMessageList(const QString & mes);
 
 public slots:
    void enterForm ();
    void registrationForm();
    void messageForm();
+   void refreshChatList();
    void messageList(const QString& log);
    void slotReadMessage(const QString& log, const QString& me, const QDateTime & time);
    void slotRegistrationError(ServerError);

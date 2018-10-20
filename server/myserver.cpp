@@ -85,6 +85,7 @@ void MyServer::slotReadClient()
         QDateTime   time;
         quint8 loginProtocol = 0;
         in >> time >> loginProtocol;
+        qDebug()<<loginProtocol;
         switch (static_cast<LoginAndSmsProtocol>(loginProtocol))
         {
         case LoginAndSmsProtocol::registration: // если int = 1
@@ -97,6 +98,7 @@ void MyServer::slotReadClient()
             sendToClient(QString::number(static_cast<quint8>(LoginAndSmsProtocol::registration)), QString::number(static_cast<int>(status)), pClientSocket);
             if(status == ServerError::Success)
             {
+                qDebug()<<"return chatList"<<chatList.size();
                 sendToClient(QString::number(static_cast<quint8>(LoginAndSmsProtocol::sendChatList)), chatList, pClientSocket);
             }
             break;
@@ -129,6 +131,11 @@ void MyServer::slotReadClient()
             }
             const QString whosend = m_clientMap.key(pClientSocket);
             sendToClient(QString::number(static_cast<quint8>(LoginAndSmsProtocol::mes)),"Login " + whosend +": " + str, m_clientMap.value(login));
+            break;
+        }
+        case LoginAndSmsProtocol::sendChatList:
+        {
+            sendToClient(QString::number(static_cast<quint8>(LoginAndSmsProtocol::sendChatList)), chatList, pClientSocket);
             break;
         }
         case LoginAndSmsProtocol::sendFile:

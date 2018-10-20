@@ -36,7 +36,8 @@ RESOURCES += \
 HEADERS += \
     qmlconnect.h \
     database.h \
-    chatprotocol.h
+    chatprotocol.h \
+    messagelist.h
 
 LIBS += -lcommon -L$$OUT_PWD/../libs/
 message($$OUT_PWD);

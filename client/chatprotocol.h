@@ -13,6 +13,7 @@ public:
     ChatProtocol(const QString &strHost, int nPort);
     void SendRegistrationToServer(const QString& login, const QString& name, const QString& password);
     void SendLoginToServer(const QString& login,const QString& password);
+    void SendRefreshChatList();
     void SendMessageToClient(const QString &name, const QString &sms);
     void SendFileInfo(const QString& login, const QString &name, qint64 size);
     void SendFile(const QString &login, const QByteArray &array, const QString &endOrNext);

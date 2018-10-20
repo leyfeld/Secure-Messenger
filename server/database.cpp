@@ -92,10 +92,14 @@ void ServDb::ChatList(const QMap<QString, QTcpSocket*> &serverMap, QVector<Clien
         QString login = query.value(0).toString();
         QString name = query.value(1).toString();
         bool online = serverMap.contains(login);
+        qDebug()<<"In chat List"<<login;
         for(int i=0;i<chatList.size();i++)
         {
             if(login==chatList[i].m_login)
+            {
+                chatList[i].m_online=online;
                 flag=false;
+            }
         }
         if (flag)
         {

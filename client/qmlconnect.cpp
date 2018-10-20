@@ -69,14 +69,9 @@ void qmlConnect::messageList(const QString & log)
 {
     dbClient->GetMessage(log, mesList);
     qDebug()<<mesList.size();
-    bool flag;
-    if(mesList[0]=="0")
-        flag=false;
-    else flag=true;
-    for(int i=1;i<mesList.size();i++)
+    for(int i=0;i<mesList.size();i++)
     {
-        emit toPrevMessageList(mesList[i],flag);
-        flag=!flag;
+        emit toPrevMessageList(mesList[i].direction,mesList[i].message);
     }
 
 }
@@ -87,11 +82,7 @@ void qmlConnect::slotRegistrationError(ServerError errorCode)
     {
         case ServerError::Success:
         {
-        QString dbPath = QDir::currentPath() + "/dbClient"+myLogin+".db";
-        qDebug() << "Current Server Db path: " << dbPath;
-        dbClient.reset(new database(dbPath));
-
-            dbClient->CreateConnection();
+            OpenClientDB();
             emit toMessanger();
             break;
         }
@@ -118,4 +109,16 @@ void qmlConnect::slotReadMessage(const QString& log, const QString& mes, const Q
     qDebug()<<log<<mes<<time;
     dbClient->InsertReceiveMessage(log, mes, time);
     emit toMessageList(mes);
+}
+void qmlConnect::OpenClientDB ()
+{
+    QString dbPath = QDir::currentPath() + "/dbClient"+myLogin+".db";
+    qDebug() << "Current Server Db path: " << dbPath;
+    dbClient.reset(new database(dbPath));
+    dbClient->CreateConnection();
+}
+
+void qmlConnect::refreshChatList()
+{
+    client->SendRefreshChatList();
 }
