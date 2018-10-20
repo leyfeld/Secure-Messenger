@@ -1,5 +1,6 @@
 #include "chatprotocol.h"
 #include "messageprotocol.h"
+#include "common.h"
 #include <QString>
 #include <QByteArray>
 #include <QDateTime>
@@ -14,6 +15,7 @@ ChatProtocol::ChatProtocol(const QString& strHost, int nPort)
     : m_nNextBlockSize(0)
 {
     chatList.resize(0);
+    //m_file = new MyFile();
     m_socket = new QTcpSocket(this);
     m_socket->connectToHost(strHost, nPort);
     connect(m_socket, SIGNAL(connected()), SIGNAL(SigConnected()));
@@ -21,6 +23,7 @@ ChatProtocol::ChatProtocol(const QString& strHost, int nPort)
     connect(m_socket, SIGNAL(error(QAbstractSocket::SocketError)),
             this,         SLOT(slotError(QAbstractSocket::SocketError))
            );
+    //connect(m_file, SIGNAL(SigSendFile(QString,QVariant)), this, SLOT(slotSendFile(QString,QVariant)));
 }
 void ChatProtocol::Send(QByteArray& arrBlock, QDataStream& streamPtr)
 {
@@ -63,57 +66,7 @@ void ChatProtocol::SendFile(const QString& login, const QVariant &data)
               << login << data;
     Send(arrBlock, outStream);
 }
-
-void ChatProtocol::TransferFile(const QString& login, const QString &filename)
-{
-    QFileInfo fi(filename);
-    qint64 bytes_to_read = 150;//1048576;//2*1024*102416*1024;//1*1024;//16*1024;
-    qint64 bytes_read = 0;
-    qint64 max_bytes = fi.size();
-    qint64 full_max_bytes = max_bytes;
-    qint64 read_bytes = 0;
-    QFile file(filename);
-    if(!file.open(QIODevice::ReadOnly))
-    {
-        qDebug() << "Can't read from file '" << filename;
-    }
-    while (max_bytes != 0)
-    {
-        QMap<QString, QVariant> new_val;
-        new_val.insert("FILENAME", filename);
-        QByteArray byteArray;
-        if(bytes_to_read > full_max_bytes)
-        {
-            bytes_to_read = full_max_bytes;
-        }
-        read_bytes = bytes_to_read;
-        if((read_bytes + bytes_read) > full_max_bytes)
-        {
-            read_bytes = full_max_bytes - bytes_to_read;
-        }
-        byteArray = file.read(read_bytes);
-        max_bytes -= byteArray.size();
-        new_val.insert("SIZE", byteArray.size());
-        if(m_socket->state()!=QAbstractSocket::ConnectedState)
-        {
-            qDebug()<<"Socket disconnected error\n";
-            break;
-        }
-        new_val.insert("PARTFILE", byteArray);
-        if(!max_bytes)
-        {
-            new_val.insert("ISEND", "end");
-        }
-        else
-        {
-            new_val.insert("ISEND", "next");
-        }
-        SendFile(login, new_val);
-        bytes_read += byteArray.size();
-    }
-    file.close();
-}
-void ChatProtocol::WriteAndReadFile(const QString& whosend, const QVariant& data)
+void ChatProtocol::WriteAndReadFile(const QString &whosend, const QVariant &data)
 {
     QMap<QString, QVariant> val;
     val = data.toMap();
@@ -138,7 +91,7 @@ void ChatProtocol::WriteAndReadFile(const QString& whosend, const QVariant& data
         endOrNext = val.value("ISEND").toString();
     }
     QString new_dir = QFileInfo(filename).fileName();
-    filename =QDir::currentPath() + "/" + new_dir;
+    filename = QDir::currentPath() + "/" + new_dir;
 //    qDebug() << "Current File path: " <<  filename;
     if(size > 0)
     {
@@ -153,11 +106,9 @@ void ChatProtocol::WriteAndReadFile(const QString& whosend, const QVariant& data
     }
     if(endOrNext == "end")
     {
-        emit SigGetFile(whosend, filename);
+        //emit SigGetFile(whosend, filename);
     }
-
 }
-
 void ChatProtocol::slotReadyRead()
 {
     QDataStream in(m_socket);
@@ -226,7 +177,7 @@ void ChatProtocol::slotReadyRead()
                 QString whosend;
                 QVariant msgData;
                 in >> whosend >> msgData ;
-                WriteAndReadFile( whosend, msgData);
+                WriteAndReadFile(whosend, msgData);
                 break;
             }
         default:
@@ -247,5 +198,10 @@ void ChatProtocol::slotError(QAbstractSocket::SocketError err)
                      "The connection was refused." :
                      QString(m_socket->errorString()) );
     emit SigErrorHappened(strError);
+}
+
+void ChatProtocol::slotSendFile(const QString &login, const QVariant &data)
+{
+    SendFile(login,data);
 }
 

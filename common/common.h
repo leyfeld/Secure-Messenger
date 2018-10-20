@@ -2,11 +2,6 @@
 #define COMMON_H
 
 
-class Common
-{
-
-public:
-    Common();
-};
+void delay( int millisecondsToWait );
 
 #endif // COMMON_H

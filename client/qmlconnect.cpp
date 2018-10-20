@@ -1,6 +1,10 @@
 #include "qmlconnect.h"
 #include "chatprotocol.h"
+#include "myfile.h"
 #include <QDateTime>
+#include <QFileDialog>
+#include <QThread>
+#include <QVariant>
 
 qmlConnect::qmlConnect()
 {
@@ -55,7 +59,7 @@ void qmlConnect::registrationForm()
 
 void qmlConnect::messageForm()
 {
-    qDebug()<<"We are in Messanger";
+        qDebug()<<"We are in Messanger";
         btnTabBar=viewer->findChild<QObject*>("btnMessageList");
         fldText=viewer->findChild<QObject*>("field1");
         QString log, message;
@@ -63,8 +67,30 @@ void qmlConnect::messageForm()
         message=(fldText->property("text")).toString();
         dbClient->InsertSendMessage(log, message, QDateTime::currentDateTime());
         qDebug()<<" "<<log<<" "<<message;
-        client->SendMessageToClient(log,message);
+        if(!m_attachmentPath.isEmpty())
+        {
+            QThread *workerThread= new QThread();
+            FileSender* m_file = new FileSender(log, m_attachmentPath);
+            m_file->moveToThread(workerThread);
+            connect(workerThread, SIGNAL(started()), m_file, SLOT(slotTransferFile()));
+            connect(workerThread, SIGNAL(finished()), workerThread, SLOT(QObject::deleteLater()));
+            connect(m_file, SIGNAL(SigSendFile(const QString&, const QVariant&)), client.get(), SLOT(slotSendFile(const QString&, const QVariant&)));
+            workerThread->start();
+            //client->TransferFile(log, m_attachmentPath);
+        }
+        if(!message.isEmpty())
+        {
+            client->SendMessageToClient(log,message);
+        }
+}
+void qmlConnect::chooseFile(const QUrl& url)
+{
+    m_attachmentPath = url.path();
+}
 
+void qmlConnect::cancelFile()
+{
+    m_attachmentPath.clear();
 }
 void qmlConnect::messageList(const QString & log)
 {
@@ -101,6 +127,9 @@ void qmlConnect::slotRegistrationError(ServerError errorCode)
         case ServerError::IncorrectLogin: txtError->setProperty("text","Неправильный логин или пароль!");
         break;
         case ServerError::IncorrectRegistration: txtError->setProperty("text","Ошибка регистрации!");
+        break;
+    default:
+        txtError->setProperty("text", "ERROR");
         break;
     }
 }

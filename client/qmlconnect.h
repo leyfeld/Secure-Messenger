@@ -9,6 +9,7 @@
 #include "database.h"
 
 
+
 class qmlConnect : public QObject
 {
     Q_OBJECT
@@ -23,6 +24,7 @@ private:
     QObject* btnTabBar=nullptr;
     QObject* listview=nullptr;
     QString myLogin;
+    QString m_attachmentPath;
     std::unique_ptr<ChatProtocol> client;
     std::unique_ptr <database> dbClient;
 public: 
@@ -42,6 +44,8 @@ public slots:
    void enterForm ();
    void registrationForm();
    void messageForm();
+   void chooseFile(const QUrl &url);
+   void cancelFile();
    void messageList(const QString& log);
    void slotReadMessage(const QString& log, const QString& me, const QDateTime & time);
    void slotRegistrationError(ServerError);

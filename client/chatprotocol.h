@@ -2,6 +2,7 @@
 #define CHATPROTOCOL_H
 #include <servererror.h>
 #include <clientlist.h>
+#include "myfile.h"
 #include <QTcpSocket>
 #include <QDataStream>
 
@@ -15,8 +16,8 @@ public:
     void SendLoginToServer(const QString& login,const QString& password);
     void SendMessageToClient(const QString &name, const QString &sms);
     void SendFile(const QString &login, const QVariant &data);
-    void TransferFile(const QString &login, const QString &filename);
-    void WriteAndReadFile(const QString& whosend, const QVariant &data);
+    void WriteAndReadFile(const QString &whosend, const QVariant &data);
+
 signals:
     void SigGetMessage(const QString &login, const QString &message, const QDateTime &time);
     void SigErrorHappened(const QString& strError);
@@ -26,15 +27,18 @@ signals:
     void SigAnswerMessage(ServerError);
     void SigAnswerSendFile(ServerError);
     void SigGetClientList (const QVector <ClientList>&);
-    void SigGetFile(const QString &whosend, const QString &filename);
+
 private slots:
     void slotReadyRead();
     void slotError(QAbstractSocket::SocketError);
+    void slotSendFile(const QString &login, const QVariant &data);
 private:
     void Send(QByteArray &arrBlock, QDataStream &streamPtr);
     quint16     m_nNextBlockSize;
     QTcpSocket* m_socket;
     QVector<ClientList> chatList;
+
+
 };
 
 
