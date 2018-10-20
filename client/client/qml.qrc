@@ -1,0 +1,14 @@
+<RCC>
+    <qresource prefix="/">
+        <file>main.qml</file>
+        <file>EnterWindow.qml</file>
+        <file>MainWindow.qml</file>
+        <file>RegisterWindow.qml</file>
+    </qresource>
+    <qresource prefix="/pics">
+        <file alias="logo_3.png">pics/logo_3.png</file>
+        <file alias="logo_1.ico">pics/logo_1.ico</file>
+        <file alias="Refresh_pic_1.png">pics/Refresh_pic_1.png</file>
+        <file alias="Refresh_pic_2.png">pics/Refresh_pic_2.png</file>
+    </qresource>
+</RCC>
