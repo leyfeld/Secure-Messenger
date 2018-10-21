@@ -85,6 +85,8 @@ void qmlConnect::messageForm()
 }
 void qmlConnect::chooseFile(const QUrl& url)
 {
+    QObject* filename = viewer->findChild<QObject*>("filename");
+    filename->setProperty("text", url.fileName());
     m_attachmentPath = url.path();
 }
 

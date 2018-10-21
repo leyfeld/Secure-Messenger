@@ -216,7 +216,7 @@ Item {
                 y: 357
                 width: 217
                 height: 22
-                //text: qsTr("File name")
+                objectName: "filename"
                 font.pixelSize: 12
             }
 
@@ -264,7 +264,6 @@ Item {
                 onAccepted:
                 {
                     checkBox.checked = true
-                    filename.text = this.fileUrl
                     qmlConnection.chooseFile(this.fileUrl)
                 }
             }
@@ -290,13 +289,6 @@ Item {
                 }
 
             }
-
-
-
-
-
-
-
         }
     }
 }
