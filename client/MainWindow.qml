@@ -241,15 +241,21 @@ Item {
                 id: attachBtn
                 y: 385
                 height: 40
-                objectName: "File"
-                text: qsTr("F")
                 anchors.left: parent.left
                 anchors.leftMargin: 498
                 anchors.right: parent.right
                 anchors.rightMargin: 101
                 anchors.bottom: parent.bottom
                 anchors.bottomMargin: 8
-                Material.background: "#FFF59D"
+                Material.background: "#FFFFFF"
+                Image {
+                    id: attachBtnImage
+                    width: parent.width*0.7
+                    height: parent.height*0.5
+                    anchors.horizontalCenter: parent.horizontalCenter
+                    anchors.verticalCenter: parent.verticalCenter
+                    source: "pics/duck.png"
+                }
                 onClicked:
                 {
                     fileDialog.open()
