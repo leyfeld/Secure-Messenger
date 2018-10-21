@@ -202,7 +202,7 @@ Item {
                 anchors.bottom: parent.bottom
                 Material.accent: "#B0BEC5"
                 anchors.bottomMargin: 8
-                anchors.leftMargin: 60
+                anchors.leftMargin: 20
                 placeholderText: "Введите текст"
 
 
@@ -210,17 +210,27 @@ Item {
                 anchors.rightMargin: 141
             }
 
+            Text {
+                id: filename
+                x: 61
+                y: 357
+                width: 217
+                height: 22
+                //text: qsTr("File name")
+                font.pixelSize: 12
+            }
+
             CheckBox {
                 id: checkBox
-                y: 383
+                y: 342
                 height: 42
                 text: qsTr("Check Box")
                 anchors.right: parent.right
-                anchors.rightMargin: 580
+                anchors.rightMargin: 577
                 anchors.bottom: parent.bottom
-                anchors.bottomMargin: 8
+                anchors.bottomMargin: 49
                 anchors.left: parent.left
-                anchors.leftMargin: 0
+                anchors.leftMargin: 20
                 onClicked: {
                     checkBox.checked = false
                     qmlConnection.cancelFile()
@@ -254,6 +264,7 @@ Item {
                 onAccepted:
                 {
                     checkBox.checked = true
+                    filename.text = this.fileUrl
                     qmlConnection.chooseFile(this.fileUrl)
                 }
             }
@@ -271,7 +282,7 @@ Item {
                 anchors.bottomMargin: 8
                 anchors.rightMargin: 8
                 onClicked: {
-                     checkBox.checked = false
+                    checkBox.checked = false
                     qmlConnection.messageForm()
                     lmMessage.append({txtMessage:field1.text,
                                          lmMessage:400})
@@ -285,7 +296,13 @@ Item {
 
 
 
+
         }
     }
 }
 
+
+/*##^## Designer {
+    D{i:46;anchors_width:60;anchors_x:0}
+}
+ ##^##*/
