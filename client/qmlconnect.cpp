@@ -9,6 +9,8 @@ qmlConnect::qmlConnect()
     connect(client.get(), SIGNAL(SigAnswerLogin(ServerError)),this, SLOT(slotRegistrationError(ServerError)));
     connect(client.get(), SIGNAL (SigGetClientList(const QVector <ClientList> & )),
             this, SLOT(chatListChange(const QVector <ClientList> & )));
+    connect(client.get(), SIGNAL (SigErrorHappened(const QString& )),
+            this, SLOT(slotServerError(const QString& )));
 
 
 }
@@ -74,6 +76,11 @@ void qmlConnect::messageList(const QString & log)
         emit toPrevMessageList(mesList[i].direction,mesList[i].message);
     }
 
+}
+void qmlConnect::slotServerError(const QString& errorCode)
+{
+    txtError=viewer->findChild<QObject*>("txtError");
+    txtError->setProperty("text",errorCode);
 }
 void qmlConnect::slotRegistrationError(ServerError errorCode)
 {

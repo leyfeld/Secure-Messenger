@@ -45,6 +45,7 @@ public slots:
    void slotReadMessage(const QString& log, const QString& me, const QDateTime & time);
    void slotRegistrationError(ServerError);
    void chatListChange(const QVector <ClientList> & chatList);
+   void slotServerError(const QString& );
 
 protected:
    QObject *viewer;

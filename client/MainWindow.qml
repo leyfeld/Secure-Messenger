@@ -185,7 +185,7 @@ Item {
              id: svMessage
              anchors.top: parent.top
              width: 640
-             height: 250
+             height: 350
              ListView
              {
                  id:lvMessage
@@ -258,6 +258,7 @@ Item {
                                anchors.rightMargin: 10
                                width:Math.max(100, parent.width / 4)
                                onClicked: {
+                                   field1.text=""
                                    qmlConnection.messageForm()
                                    lmMessage.append({txtMessage:field1.text,
                                                         lmMessage:400})
