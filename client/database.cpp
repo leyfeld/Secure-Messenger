@@ -1,23 +1,24 @@
 #include "database.h"
-#include <QDateTime>
 
 database::database(const QString& dbName)
 {
 
     dbClient = QSqlDatabase::addDatabase("QSQLITE", cnDbSendMessage);
     dbClient.setDatabaseName(dbName);
+    dbClient = QSqlDatabase::database(cnDbSendMessage);
 }
 
 void database::CreateConnection()
 {
 
-    dbClient = QSqlDatabase::database(cnDbSendMessage);
     if (!QSqlDatabase::contains(cnDbSendMessage))
     {
         qDebug() << "Can't find db connection";
         return;
     }
+    QString tableName="test";
     QSqlQuery query(dbClient );
+
     if (!query.exec("create table if not exists SendMessage (login varchar(20), message varchar(256), smData integer)"))
     {
         qDebug() << "Can't create table: " << query.lastError().text();
@@ -37,10 +38,14 @@ void database:: InsertSendMessage (const QString& login, const QString& message,
     }
     dbClient = QSqlDatabase::database(cnDbSendMessage);
     QSqlQuery query(dbClient);
-    query.prepare("INSERT INTO SendMessage (Login, Message, smData) values(:login, :message, :smdata)");
-    query.bindValue(":login", login);
+    if (!query.exec("create table if not exists "+login+" (message varchar(256), time integer, direction varchar(5))"))
+    {
+        qDebug() << "Can't create table: " << query.lastError().text();
+    }
+    query.prepare("INSERT INTO "+login+" (message, time, direction) values(:message, :time, :direction)");
     query.bindValue(":message", message);
-    query.bindValue(":smdata", time);
+    query.bindValue(":time", time);
+    query.bindValue(":direction", "to");
     if (!query.exec())
     {
         qDebug() << "Can't insert message: " << query.lastError().text();
@@ -57,68 +62,44 @@ void database:: InsertReceiveMessage (const QString& login, const QString& messa
     qDebug()<<"we are in database";
     dbClient = QSqlDatabase::database(cnDbSendMessage);
     QSqlQuery query(dbClient);
-    query.prepare("INSERT INTO ReceiveMessage (Login, Message, smData) values(:login, :message, :smdata)");
-    query.bindValue(":login", login);
+    if (!query.exec("create table if not exists "+login+" (message varchar(256), time integer, direction varchar(5))"))
+    {
+        qDebug() << "Can't create table: " << query.lastError().text();
+    }
+    query.prepare("INSERT INTO "+login+" (message, time, direction) values(:message, :time, :direction)");
     query.bindValue(":message", message);
-    query.bindValue(":smdata", time);
+    query.bindValue(":time", time);
+    query.bindValue(":direction", "from");
     if (!query.exec())
     {
         qDebug() << "Can't insert message: " << query.lastError().text();
     }
 }
 
-void database::GetMessage(const QString& login, QVector<QString> & messageList)
+void database::GetMessage(const QString& login, QVector<Messagelist> & mesList)
 {
-    messageList.resize(0);
+    mesList.resize(0);
     qDebug()<<"We want old message";
-    dbClient = QSqlDatabase::database(cnDbSendMessage);
-    QSqlQuery smQuery(dbClient);
-    QSqlQuery rmQuery(dbClient);
-    smQuery.prepare("select message, smData from SendMessage where login=:login");
-    smQuery.bindValue(":login", login);
-    if (!smQuery.exec())
+    qDebug()<<login;
+    QString dir, mes;
+    QSqlQuery query(dbClient);
+    if (!query.exec("create table if not exists "+login+" (message varchar(256), time integer, direction varchar(5))"))
     {
-        qDebug() << smQuery.lastError().text();
-        return;
+        qDebug() << "Can't create table: " << query.lastError().text();
     }
-    rmQuery.prepare("select message, smData from ReceiveMessage where login=:login");
-    rmQuery.bindValue(":login", login);
-    if (!rmQuery.exec())
+
+    if (!query.exec("select message, direction from "+login))
     {
-        qDebug() << rmQuery.lastError().text();
+        qDebug() << query.lastError().text();
         return;
     }
 
-    while(rmQuery.next() || smQuery.next())
+    while(query.next())
     {
-        QDateTime smTime, rmTime;
-        if(!rmQuery.next())
-        {
-            messageList.push_back(smQuery.value(1).toString());
-            return;
-        }
-        if(!smQuery.next())
-        {
-            messageList.push_back(rmQuery.value(1).toString());
-            return;
-        }
-        smTime=smQuery.value(2).toDateTime();
-        rmTime=rmQuery.value(2).toDateTime();
-
-        if(smTime>=rmTime)
-        {
-            messageList.push_back("0");
-            messageList.push_back(rmQuery.value(1).toString());
-            messageList.push_back(smQuery.value(1).toString());
-        }
-        else
-        {
-            messageList.push_back("1");
-            messageList.push_back(smQuery.value(1).toString());
-            messageList.push_back(rmQuery.value(1).toString());
-        }
-
- }
+        dir=query.value(1).toString();
+        mes=query.value(0).toString();
+        mesList.push_back({dir, mes});
+    }
 }
 
 database::~database()

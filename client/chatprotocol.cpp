@@ -57,6 +57,14 @@ void ChatProtocol::SendMessageToClient(const QString &name,const QString &sms)
     outStream << quint16(0) << QDateTime::currentDateTime() << static_cast<quint8>(LoginAndSmsProtocol::mes) << name << sms;
     Send(arrBlock, outStream);
 }
+void ChatProtocol::SendRefreshChatList()
+{
+    QByteArray arrBlock;
+    QDataStream outStream(&arrBlock, QIODevice::WriteOnly);
+    outStream.setVersion(QDataStream::Qt_4_2);
+    outStream << quint16(0) << QDateTime::currentDateTime() << static_cast<quint8>(LoginAndSmsProtocol::sendChatList);
+    Send(arrBlock, outStream);
+}
 void ChatProtocol::SendFile(const QString& login, const QVariant &data)
 {
     QByteArray arrBlock;

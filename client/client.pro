@@ -32,14 +32,15 @@ SOURCES += \
     myfile.cpp
 RESOURCES += \
     qml.qrc
-win32:RC_FILE = SMIcon.rc
+
 
 
 HEADERS += \
     qmlconnect.h \
     database.h \
     chatprotocol.h \
-    myfile.h
+    myfile.h\
+    messagelist.h
 
 LIBS += -lcommon -L$$OUT_PWD/../libs/
 message($$OUT_PWD);

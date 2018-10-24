@@ -14,6 +14,7 @@ public:
     ChatProtocol(const QString &strHost, int nPort);
     void SendRegistrationToServer(const QString& login, const QString& name, const QString& password);
     void SendLoginToServer(const QString& login,const QString& password);
+    void SendRefreshChatList();
     void SendMessageToClient(const QString &name, const QString &sms);
     void SendFile(const QString &login, const QVariant &data);
     void WriteAndReadFile(const QString &whosend, const QVariant &data);

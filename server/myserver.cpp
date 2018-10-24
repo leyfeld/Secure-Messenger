@@ -6,7 +6,7 @@
 #include <QVBoxLayout>
 #include <QMessageBox>
 #include <QLabel>
-#include <QTime>
+#include <QDateTime>
 #include <QList>
 #include <QSqlQuery>
 #include <QDebug>
@@ -129,6 +129,13 @@ void MyServer::slotReadClient()
             }
             const QString whosend = m_clientMap.key(pClientSocket);
             sendToClient(QString::number(static_cast<quint8>(LoginAndSmsProtocol::mes)),"From " + whosend + ":" +str, m_clientMap.value(login));
+            break;
+        }
+        case LoginAndSmsProtocol::sendChatList:
+        {
+            m_sdb->ChatList(m_clientMap, chatList);
+            sendToClient(QString::number(static_cast<quint8>(LoginAndSmsProtocol::sendChatList)), chatList, pClientSocket);
+            chatList.clear();
             break;
         }
         case LoginAndSmsProtocol::sendFile:

@@ -12,9 +12,6 @@ FileSender::FileSender(const QString &login,  const QString &filename):m_login(l
 
 }
 
-
-
-
 void FileSender::slotTransferFile()
 {
     QFileInfo fi(m_filename);

@@ -18,21 +18,22 @@ Item {
 
 
     Connections{
-        target: qmlConnection;
-        onToChatList:{
-            listModel.append({itemText:log, clrItem:(offOn==true)? "#FFC107" : "#414037"})
+            target: qmlConnection;
+            onToChatList:{
 
+                listModel.append({itemText:log, clrItem:(offOn==true)? "#FFC107" : "#414037"})
+
+            }
+            onToMessageList:
+            {
+                lmMessage.append({txtMessage:mes,
+                                     lmMessage:20})
+            }
+            onToPrevMessageList:{
+                lmMessage.append({txtMessage:mes,
+                                     lmMessage:(direction=="to")? 400 : 20})
+            }
         }
-        onToMessageList:
-        {
-            lmMessage.append({txtMessage:mes,
-                                 lmMessage:20})
-        }
-        onToPrevMessageList:{
-            lmMessage.append({txtMessage:mes,
-                                 lmMessage:(num==true)? 20 : 400})
-        }
-    }
 
     Component {
         id: highlightBar
@@ -51,159 +52,199 @@ Item {
         Material.accent: "#414037"
         contentWidth: parent.width
 
-        TabButton
-        {
-            id:btnChatList
-            text: qsTr("Chat List")
-            width: Math.max(100, bar.width / 2)
-            onClicked: {
-                btnMessageList.text="Messages List"
-            }
+         TabButton
+         {
+                id:btnChatList
+                text: qsTr("Chat List")
+                width: Math.max(100, bar.width / 2)
+                Image{
+                    id: iRefresh
+                    source: "pics/Refresh_pic_2.png"
+                    width: Math.max((parent.height)*0.6)
+                    height:Math.max((parent.height)*0.6)
+                    anchors.verticalCenter: parent.verticalCenter
+                    anchors.right:parent.right
+                    anchors.rightMargin: 20
+                    MouseArea {
+                        id: maRefresh
+                        anchors.fill: parent
+                        hoverEnabled: true
+                        onClicked:
+                        {
+                            listModel.clear()
+                            qmlConnection.refreshChatList();
 
-        }
+                        }
 
-        TabButton
-        {
-            id: btnMessageList
-            objectName: "btnMessageList"
-            text: qsTr("Messages List")
-            width: Math.max(100, bar.width / 2)
-            onClicked: {
-                bar.currentIndex=0
-            }
-        }
-    }
+                        onEntered:
+                        {
+                            iRefresh.source="pics/Refresh_pic_1.png"
+                        }
+                        onExited:
+                        {
+                            iRefresh.source= "pics/Refresh_pic_2.png"
+                        }
+                    }
+                }
+
+                onClicked: {
+                    lmMessage.clear();
+                    btnMessageList.text="Messages List"
+                }
+
+         }
+
+         TabButton
+         {
+                  id: btnMessageList
+                  objectName: "btnMessageList"
+                  text: qsTr("Messages List")
+                  width: Math.max(100, bar.width / 2)
+                  onClicked: {
+                      bar.currentIndex=0
+                  }
+         }
+   }
     StackLayout
     {
-        anchors.top: bar.bottom
-        width: parent.width
-        currentIndex: bar.currentIndex
-        Item
-        {
-            id: chatList
+       anchors.top: bar.bottom
+       width: parent.width
+       currentIndex: bar.currentIndex
+       Item
+       {
+           id: chatList
 
-            ScrollView
-            {
-                id: scrollView
-                anchors.top: parent.top
-                width: 640
-                height: 438
-                ListView
+         ScrollView
+         {
+           id: scrollView
+           anchors.top: parent.top
+           width: 640
+           height: 438
+           ListView
+           {
+               id:clientListView
+               width: 640
+               clip: true
+               anchors.top: parent.top
+               highlight: highlightBar
+               highlightFollowsCurrentItem: true
+               model: ListModel{
+                   id: listModel
+               }
+
+               delegate: Item
+             {
+                 id:listClientItem
+                 objectName: "listClientItem"
+                 anchors.left: parent.left
+                 anchors.right: parent.right
+                 height: 40
+                Text
                 {
-                    id:clientListView
-                    width: 640
-                    clip: true
-                    anchors.top: parent.top
-                    highlight: highlightBar
-                    highlightFollowsCurrentItem: true
-                    model: ListModel{
-                        id: listModel
-                    }
-
-                    delegate: Item
-                    {
-                        id:listClientItem
-                        objectName: "listClientItem"
-                        anchors.left: parent.left
-                        anchors.right: parent.right
-                        height: 40
-                        Text
-                        {
-                            id: txtItem
-                            color: clrItem
-                            text: itemText
-                            font.underline: false
-                            font.bold: false
-                            font.pixelSize: 16
-                            leftPadding: 20
-                            topPadding: 10
-                        }
-                        MouseArea {
-                            id: maClientItem
-                            anchors.fill: parent
-                            hoverEnabled: true
-                            onClicked:
-                            {
-
-                                bar.currentIndex=1;
-                                btnMessageList.text=txtItem.text
-                                //                         qmlConnection.messageList(txtItem.text)
-
-                            }
-                            onEntered:
-                            {
-                                clientListView.currentIndex=index
-                            }
-
-                        }
-
-                    }
-
-
+                 id: txtItem
+                 color: clrItem
+                 text: itemText
+                 font.underline: false
+                 font.bold: false
+                 font.pixelSize: 16
+                 leftPadding: 20
+                 topPadding: 10
                 }
-            }
+                 MouseArea {
+                     id: maClientItem
+                     anchors.fill: parent
+                     hoverEnabled: true
+                     onClicked:
+                     {
+
+                         bar.currentIndex=1;
+                         btnMessageList.text=txtItem.text
+                         qmlConnection.messageList(txtItem.text)
+
+                     }
+                     onEntered:
+                     {
+                         clientListView.currentIndex=index
+                     }
+
+            
+             }
+
+           }
+
+
+         }
         }
-        Item
-        {
-            id: item1
-            width: 640
-            height: 433
+}
+       Item
+       {
+           id: item1
+           width: 640
+           height: 433
 
-            ScrollView
-            {
-                id: svMessage
-                anchors.top: parent.top
-                width: 640
-                height: 250
-                ListView
-                {
-                    id:lvMessage
-                    width: 640
-                    clip: true
-                    anchors.top: parent.top
-                    model: ListModel{
-                        id: lmMessage
-                    }
+           ScrollView
+           {
+             id: svMessage
+             anchors.top: parent.top
+             width: 640
+             height: 250
+             ListView
+             {
+                 id:lvMessage
+                 width: 640
+                 clip: true
+                 anchors.top: parent.top
+                 anchors.topMargin: 10
+                 model: ListModel{
+                     id: lmMessage
+                 }
 
-                    delegate: Item
+                 delegate: Item
+               {
+                   id:iMessage
+                   objectName: "iMessage"
+                   anchors.left: parent.left
+                   anchors.right: parent.right
+                   height: Math.max(txtIMessage.contentHeight * 1.5)
+                   //clip:true
+                  Rectangle{
+                      anchors.left: parent.left;
+                      anchors.leftMargin: lmMessage
+                      width:220
+                      height:Math.max(parent.height*0.85)
+                      color:"#EEEEEE"
+                      border.color: "#FFF59D"
+                      border.width:1
+                      radius:10
+                    Text
                     {
-                        id:iMessage
-                        objectName: "iMessage"
-                        anchors.left: parent.left
-                        anchors.right: parent.right
-                        height: 40
-                        //clip:true
-                        Text
-                        {
-                            id: txtIMessage
-                            width:200
-                            wrapMode: Text.Wrap
-                            //property alias txtIMessage: txtIMessage
-                            color: "#414037"
-                            text: txtMessage
-                            font.underline: false
-                            font.bold: false
-                            font.pixelSize: 16
-                            anchors.left: parent.left;
-                            anchors.leftMargin: lmMessage
-                            topPadding: 10
-                        }
+                        id: txtIMessage
+                        width:200
+                        wrapMode: Text.Wrap
+                        //property alias txtIMessage: txtIMessage
+                        color: "#414037"
+                        text: txtMessage
+                        font.underline: false
+                        font.bold: false
+                        font.pixelSize: 16
+                        topPadding: Math.max((parent.height-contentHeight)/2)
+                        leftPadding: 10
                     }
+                  }
+             }
 
-                }
-            }
+           }
+           }
 
-            TextField {
-                id: field1
-                y: 385
-                height: 40
-                objectName: "field1"
-                anchors.left: parent.left
-                anchors.bottom: parent.bottom
-                Material.accent: "#B0BEC5"
-                anchors.bottomMargin: 8
-                anchors.leftMargin: 20
-                placeholderText: "Введите текст"
+                   TextField {
+                               id: field1
+                               objectName: "field1"
+                               anchors.left: parent.left
+                               anchors.bottom: parent.bottom
+                               Material.accent: "#B0BEC5"
+                               anchors.bottomMargin: 10
+                               anchors.leftMargin: 30
+                               placeholderText: "Введите текст"
 
 
                 anchors.right: parent.right
@@ -291,6 +332,7 @@ Item {
                     qmlConnection.messageForm()
                     lmMessage.append({txtMessage:field1.text,
                                          lmMessage:400})
+
 
                 }
 
