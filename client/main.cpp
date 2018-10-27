@@ -1,12 +1,9 @@
+#include "qmlconnect.h"
 #include <QGuiApplication>
 #include <QQmlApplicationEngine>
 #include <QQuickStyle>
 #include <QWindow>
 #include <QQmlContext>
-#include "chatprotocol.h"
-#include "qmlconnect.h"
-#include <QFile>
-#include <QByteArray>
 
 
 int main(int argc, char *argv[])

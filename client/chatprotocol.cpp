@@ -4,27 +4,45 @@
 #include <QString>
 #include <QByteArray>
 #include <QDateTime>
-#include <QTcpSocket>
 #include <QFileInfo>
 #include <QDataStream>
 #include <QBuffer>
 #include <QMap>
 #include <QDir>
+#include <QSslCertificate>
+#include <QSslSocket>
 
 ChatProtocol::ChatProtocol(const QString& strHost, int nPort)
     : m_nNextBlockSize(0)
 {
     chatList.resize(0);
-    //m_file = new MyFile();
-    m_socket = new QTcpSocket(this);
-    m_socket->connectToHost(strHost, nPort);
+    m_socket = new QSslSocket(this);
+    m_socket->disconnectFromHost();
+    QByteArray cert;
+    QFile file_cert("/Users/leyfeld/Documents/projects/tasks/testCert/sc.crt");
+    if(file_cert.open(QIODevice::ReadOnly))
+    {
+        cert = file_cert.readAll();
+        file_cert.close();
+    }
+    QSslCertificate ssl_cert(cert);
+    m_socket->addCaCertificate(ssl_cert);
+    m_socket->setLocalCertificate(ssl_cert);
+    connect(m_socket, SIGNAL(sslErrors(const QList<QSslError>&)),
+            this, SLOT(slotSslErrorOccured(const QList<QSslError>&)));
+    m_socket->connectToHostEncrypted(strHost, nPort);
     connect(m_socket, SIGNAL(connected()), SIGNAL(SigConnected()));
     connect(m_socket, SIGNAL(readyRead()), SLOT(slotReadyRead()));
     connect(m_socket, SIGNAL(error(QAbstractSocket::SocketError)),
             this,         SLOT(slotError(QAbstractSocket::SocketError))
            );
-    //connect(m_file, SIGNAL(SigSendFile(QString,QVariant)), this, SLOT(slotSendFile(QString,QVariant)));
 }
+
+void ChatProtocol::slotSslErrorOccured(const QList<QSslError> & error) {
+    qDebug() << "sslErrorOccured:" << error;
+    m_socket->ignoreSslErrors(error);
+}
+
 void ChatProtocol::Send(QByteArray& arrBlock, QDataStream& streamPtr)
 {
     streamPtr.device()->seek(0);

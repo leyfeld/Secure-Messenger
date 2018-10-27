@@ -7,6 +7,7 @@ import QtQuick.Controls.Material 2.0
 import QtQuick.Dialogs 1.3
 
 
+
 Item {
     id: messageWindow
     visible: true
@@ -273,6 +274,7 @@ Item {
                 anchors.left: parent.left
                 anchors.leftMargin: 20
                 onClicked: {
+                    filename.text = " ";
                     checkBox.checked = false
                     qmlConnection.cancelFile()
                 }
@@ -332,6 +334,7 @@ Item {
                     qmlConnection.messageForm()
                     lmMessage.append({txtMessage:field1.text,
                                          lmMessage:400})
+                    field1.text = ""
 
 
                 }

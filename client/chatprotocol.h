@@ -1,10 +1,11 @@
 #ifndef CHATPROTOCOL_H
 #define CHATPROTOCOL_H
-#include <servererror.h>
-#include <clientlist.h>
+#include "servererror.h"
+#include "clientlist.h"
 #include "myfile.h"
-#include <QTcpSocket>
 #include <QDataStream>
+#include <QTcpSocket>
+#include <QSslSocket>
 
 
 class ChatProtocol: public QObject
@@ -32,11 +33,12 @@ signals:
 private slots:
     void slotReadyRead();
     void slotError(QAbstractSocket::SocketError);
+    void slotSslErrorOccured(const QList<QSslError> & error);
     void slotSendFile(const QString &login, const QVariant &data);
 private:
     void Send(QByteArray &arrBlock, QDataStream &streamPtr);
     quint16     m_nNextBlockSize;
-    QTcpSocket* m_socket;
+    QSslSocket* m_socket;
     QVector<ClientList> chatList;
 
 

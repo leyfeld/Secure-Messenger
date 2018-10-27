@@ -1,13 +1,13 @@
 #ifndef QMLCONNECT_H
 #define QMLCONNECT_H
 
+#include "chatprotocol.h"
+#include "database.h"
+#include "messagelist.h"
 #include <QObject>
 #include <QDebug>
 #include <QDir>
 #include <memory>
-#include "chatprotocol.h"
-#include "database.h"
-#include "messagelist.h"
 
 
 class qmlConnect : public QObject
