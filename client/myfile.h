@@ -14,7 +14,6 @@ public:
 
 signals:
     void SigSendFile(const QString &login, const QVariant &data);
-    void SigGetFile(const QString &whosend, const QString &filename);
 
 public slots:
     void slotTransferFile();

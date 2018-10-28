@@ -81,6 +81,7 @@ void MyServer::slotReadClient()
                 break;
             }
             in >> m_nNextBlockSize;
+            qDebug() <<"read block server: " << m_nNextBlockSize;
         }
         if (pClientSocket->bytesAvailable() < m_nNextBlockSize)
         {
@@ -89,6 +90,7 @@ void MyServer::slotReadClient()
         QDateTime   time;
         quint8 loginProtocol = 0;
         in >> time >> loginProtocol;
+        qDebug() << "Server get loginProtocol: " << loginProtocol;
         switch (static_cast<LoginAndSmsProtocol>(loginProtocol))
         {
         case LoginAndSmsProtocol::registration: // если int = 1
@@ -152,6 +154,33 @@ void MyServer::slotReadClient()
             sendToClient(QString::number(static_cast<int>(LoginAndSmsProtocol::sendFile)),whosend, msgData, m_clientMap.value(login));
             break;
         }
+        case LoginAndSmsProtocol::reqwestFileInfo:
+        {
+            QString name;
+            //QString filename;
+            in >>name ;
+            if(!m_clientMap.contains(name))
+            {
+                in<<static_cast<qint8>(ServerError::LoginOffline);
+                break;
+            }
+            const QString whosend = m_clientMap.key(pClientSocket);
+            sendToClient(QString::number(static_cast<int>(LoginAndSmsProtocol::reqwestFileInfo)),whosend, m_clientMap.value(name));
+            break;
+        }
+        case LoginAndSmsProtocol::answerSendFile:
+        {
+            QString name;
+            in >> name;
+            if(!m_clientMap.contains(name))
+            {
+                in<<static_cast<qint8>(ServerError::LoginOffline);
+                break;
+            }
+            const QString whosend = m_clientMap.key(pClientSocket);
+            sendToClient(QString::number(static_cast<int>(LoginAndSmsProtocol::answerSendFile)),whosend, m_clientMap.value(name));
+            break;
+        }
         default:
         throw std::runtime_error("not implemented switch LoginAndSmsProtocol");
         }
@@ -169,6 +198,7 @@ void MyServer::sendToClient(const QString& str2, const T& str, QAbstractSocket *
 
     out.device()->seek(0);
     out << quint16(arrBlock.size() - sizeof(quint16));
+    qDebug()<<"send arrblock from server: "<< arrBlock.size();
     pSocket->write(arrBlock);
 
 }
@@ -182,5 +212,6 @@ void MyServer::sendToClient(const QString& protocol,const QString& whosend ,cons
 
     out.device()->seek(0);
     out << quint16(arrBlock.size() - sizeof(quint16));
+    qDebug()<<"send arrblock from server: "<< arrBlock.size();
     pSocket->write(arrBlock);
 }

@@ -11,6 +11,7 @@ SslServer::SslServer(QObject* parent):QTcpServer(parent)
 {
 
 }
+
 void SslServer::slotError(QAbstractSocket::SocketError error)
 {
     qDebug()<<error;

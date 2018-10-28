@@ -15,7 +15,7 @@ FileSender::FileSender(const QString &login,  const QString &filename):m_login(l
 void FileSender::slotTransferFile()
 {
     QFileInfo fi(m_filename);
-    qint64 bytes_to_read = 1024;//1048576;//2*1024*102416*1024;//1*1024;//16*1024;
+    qint64 bytes_to_read = 4*1024;//1048576;//2*1024*102416*1024;//1*1024;//16*1024;
     qint64 bytes_read = 0;
     qint64 max_bytes = fi.size();
     qint64 full_max_bytes = max_bytes;
@@ -53,7 +53,7 @@ void FileSender::slotTransferFile()
         }
         emit SigSendFile(m_login, new_val);
         bytes_read += byteArray.size();
-        delay(10);
+        delay(100);
     }
     file.close();
 }
