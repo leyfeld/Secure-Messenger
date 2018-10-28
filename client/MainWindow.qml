@@ -8,6 +8,7 @@ import QtQuick.Dialogs 1.3
 
 
 
+
 Item {
     id: messageWindow
     visible: true
@@ -34,7 +35,12 @@ Item {
                 lmMessage.append({txtMessage:mes,
                                      lmMessage:(direction=="to")? 400 : 20})
             }
-        }
+            onToGetFile :
+            {
+                //console.log("emit file sig")
+                fDialog.open()
+            }
+    }
 
     Component {
         id: highlightBar
@@ -94,6 +100,27 @@ Item {
                 }
 
          }
+         Dialog{
+            id: fDialog
+            title: "Would you like add new file?"
+            standardButtons: Dialog.Ok | Dialog.Cancel
+            Label {
+                    id: textLabel
+                    text: qsTr("Would you like add the new file?")
+                    color: "#34aadc"
+                    anchors.centerIn: parent // Помещаем сообщение в центре области для сообщения
+                  }
+                onAccepted:
+                {
+                    console.log("Ok clicked")
+                    qmlConnection.okSendFile()
+                }
+                onRejected:
+                {
+                    console.log("Cancel clicked")
+                    qmlConnection.cancelFile()
+                }
+            }
 
          TabButton
          {
@@ -335,14 +362,13 @@ Item {
                     lmMessage.append({txtMessage:field1.text,
                                          lmMessage:400})
                     field1.text = ""
-
-
                 }
-
             }
-        }
-    }
-}
+                    }
+                }
+            }
+
+
 
 
 /*##^## Designer {

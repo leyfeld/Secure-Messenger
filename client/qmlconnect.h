@@ -25,6 +25,7 @@ private:
     QObject* listview=nullptr;
     QString myLogin;
     QString m_attachmentPath;
+    QString fileLogin;
     std::unique_ptr<ChatProtocol> client;
     std::unique_ptr <database> dbClient;
 public: 
@@ -39,6 +40,7 @@ signals:
     void toChatList(const QString & log, const bool & offOn);
     void toPrevMessageList(const QString & direction, const QString & mes);
     void toMessageList(const QString & mes);
+    void toGetFile();
 
 public slots:
    void enterForm ();
@@ -51,6 +53,10 @@ public slots:
    void slotReadMessage(const QString& log, const QString& me, const QDateTime & time);
    void slotRegistrationError(ServerError);
    void chatListChange(const QVector <ClientList> & chatList);
+   void slotGetFile(const QString & login);
+   void transportFile(const QString &login);
+   void okSendFile();
+   void cancelSendFile();
 
 protected:
    QObject *viewer;
