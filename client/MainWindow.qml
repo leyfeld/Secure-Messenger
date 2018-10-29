@@ -1,9 +1,10 @@
+
 import QtQuick 2.9
 import QtQuick.Window 2.2
 import QtQuick.Controls 2.4
 import QtQuick.Layouts 1.11
 import QtQuick.Controls.Material 2.0
-
+import QtQuick.Dialogs 1.3
 
 
 Item {
@@ -17,39 +18,39 @@ Item {
 
 
     Connections{
-        target: qmlConnection;
-        onToChatList:{
+            target: qmlConnection;
+            onToChatList:{
 
-            listModel.append({itemText:log, clrItem:(offOn==true)? "#FFC107" : "#414037"})
+                listModel.append({itemText:log, clrItem:(offOn==true)? "#FFC107" : "#414037"})
 
-        }
-        onToMessageList:
-        {
-            lmMessage.append({txtMessage:mes,
-                                 lmMessage:20})
-        }
-        onToPrevMessageList:{
-            lmMessage.append({txtMessage:mes,
-                                 lmMessage:(direction=="to")? 400 : 20})
-        }
-    }
-
-    Component {
-            id: highlightBar
-            Rectangle {
-                width: 200; height: 50
-                color: "#EEEEEE"
+            }
+            onToMessageList:
+            {
+                lmMessage.append({txtMessage:mes,
+                                     lmMessage:20})
+            }
+            onToPrevMessageList:{
+                lmMessage.append({txtMessage:mes,
+                                     lmMessage:(direction=="to")? 400 : 20})
             }
         }
 
+    Component {
+        id: highlightBar
+        Rectangle {
+            width: 200; height: 50
+            color: "#EEEEEE"
+        }
+    }
+
     TabBar
     {
-         id: bar
-         width: parent.width
-         currentIndex: 0
-         Material.background: "#FFF59D"
-         Material.accent: "#414037"
-         contentWidth: parent.width
+        id: bar
+        width: parent.width
+        currentIndex: 0
+        Material.background: "#FFF59D"
+        Material.accent: "#414037"
+        contentWidth: parent.width
 
          TabButton
          {
@@ -166,6 +167,7 @@ Item {
                          clientListView.currentIndex=index
                      }
 
+            
              }
 
            }
@@ -219,7 +221,6 @@ Item {
                         id: txtIMessage
                         width:200
                         wrapMode: Text.Wrap
-                        //property alias txtIMessage: txtIMessage
                         color: "#414037"
                         text: txtMessage
                         font.underline: false
@@ -235,40 +236,119 @@ Item {
            }
 
                    TextField {
-                               id: field1
-                               objectName: "field1"
-                               anchors.left: parent.left
-                               anchors.bottom: parent.bottom
-                               Material.accent: "#B0BEC5"
-                               anchors.bottomMargin: 10
-                               anchors.leftMargin: 30
-                               placeholderText: "Введите текст"
+                id: field1
+                objectName: "field1"
+                anchors.left: parent.left
+                anchors.bottom: parent.bottom
+                Material.accent: "#414037"
+                anchors.bottomMargin: 10
+                anchors.leftMargin: 30
+                placeholderText: "Введите текст"
+                anchors.right: parent.right
+                anchors.rightMargin: 170
+            }
+
+                Image {
+                    id: attachBtnImage
+                    anchors.left: field1.right
+                    anchors.leftMargin: 10
+                    anchors.right: button.left
+                    anchors.rightMargin: 10
+                    anchors.bottom: parent.bottom
+                    anchors.bottomMargin: 10
+                    anchors.top: field1.top
+                    source: "pics/duck.png"
+                    MouseArea{
+                        id: maAttach
+                        anchors.fill: parent
+                        hoverEnabled: true
+                        onClicked:
+                        {
+                            fileDialog.open()
+                        }
+                        onEntered:
+                        {
+                            attachBtnImage.source= "pics/duck_1.png"
+                        }
+                        onExited:
+                        {
+                            attachBtnImage.source= "pics/duck.png"
+                        }
+                    }
+                  }
 
 
-                               width: Math.max(100, (parent.width - button.width)*0.9)
-                           }
-                   Button {
-                               id: button
-                               objectName: "button"
-                               text: qsTr("Отправить")
-                               Material.background: "#FFF59D"
-                               anchors.right: parent.right
-                               anchors.bottom: parent.bottom
-                               anchors.bottomMargin: 10
-                               anchors.rightMargin: 10
-                               width:Math.max(100, parent.width / 4)
-                               onClicked: {
-                                   field1.text=""
-                                   qmlConnection.messageForm()
-                                   lmMessage.append({txtMessage:field1.text,
-                                                        lmMessage:400})
 
-                               }
-                           }
+                CheckBox {
+                id: checkBox
+                Material.accent: "#414037"
+                height: 42
+                anchors.bottom: field1.top
+                anchors.left: field1.left
+                visible:false;
+                onClicked: {
+                    qmlConnection.cancelFile()
+                    checkBox.visible=false
+                    filename.visible=false
+                    svMessage.height=350
+                }
+                }
+             Text {
+                    id: filename
+                    anchors.left: checkBox.right
+                    anchors.leftMargin: 5
+                    anchors.bottom: checkBox.bottom
+                    anchors.bottomMargin: 5
+                    width: 217
+                    height: 22
+                    objectName: "filename"
+                    font.pixelSize: 12
+                }
 
-       }
- }
+            FileDialog
+            {
+                id: fileDialog
+                title: "Please choose a file"
+                folder: shortcuts.home
+                onAccepted:
+                {
+                    checkBox.visible=true
+                    checkBox.checked = true
+                    filename.visible=true
+                    svMessage.height=325
+                    qmlConnection.chooseFile(this.fileUrl)
+                }
+            }
+            Button {
+                id: button
+                y: 385
+                height: 50
+                objectName: "button"
+                text: qsTr("Send")
+                anchors.left: parent.left
+                anchors.leftMargin: 539
+                Material.background: "#FFF59D"
+                anchors.right: parent.right
+                anchors.bottom: parent.bottom
+                anchors.bottomMargin: 8
+                anchors.rightMargin: 8
+                onClicked: {
+                    field1.text=""
+                    checkBox.checked = false
+                    qmlConnection.messageForm()
+                    lmMessage.append({txtMessage:field1.text,
+                                         lmMessage:400})
 
 
+                }
 
+            }
+        }
+    }
 }
+
+
+/*##^## Designer {
+    D{i:46;anchors_width:60;anchors_x:0}
+}
+ ##^##*/

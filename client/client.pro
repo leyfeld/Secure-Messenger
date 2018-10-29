@@ -5,8 +5,9 @@
 QT += core
 QT += network
 QT += quick quickcontrols2
-QT+=network
-QT+=sql
+QT +=network
+QT +=sql
+QT += widgets
 
 CONFIG += c++11
 TEMPLATE = app
@@ -27,7 +28,8 @@ SOURCES += \
         main.cpp \
     chatprotocol.cpp\
     qmlconnect.cpp \
-    database.cpp
+    database.cpp \
+    myfile.cpp
 RESOURCES += \
     qml.qrc
 
@@ -37,6 +39,7 @@ HEADERS += \
     qmlconnect.h \
     database.h \
     chatprotocol.h \
+    myfile.h\
     messagelist.h
 
 LIBS += -lcommon -L$$OUT_PWD/../libs/

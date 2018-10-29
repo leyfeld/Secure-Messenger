@@ -2,6 +2,7 @@
 #define CHATPROTOCOL_H
 #include <servererror.h>
 #include <clientlist.h>
+#include "myfile.h"
 #include <QTcpSocket>
 #include <QDataStream>
 
@@ -15,11 +16,11 @@ public:
     void SendLoginToServer(const QString& login,const QString& password);
     void SendRefreshChatList();
     void SendMessageToClient(const QString &name, const QString &sms);
-    void SendFileInfo(const QString& login, const QString &name, qint64 size);
-    void SendFile(const QString &login, const QByteArray &array, const QString &endOrNext);
-    void TransferFile(const QString &login, const QString &filename);
+    void SendFile(const QString &login, const QVariant &data);
+    void WriteAndReadFile(const QString &whosend, const QVariant &data);
+
 signals:
-    void SigGetMessage(const QString &, const QString &, const QDateTime &);
+    void SigGetMessage(const QString &login, const QString &message, const QDateTime &time);
     void SigErrorHappened(const QString& strError);
     void SigConnected();
     void SigAnswerReg(ServerError);
@@ -27,14 +28,18 @@ signals:
     void SigAnswerMessage(ServerError);
     void SigAnswerSendFile(ServerError);
     void SigGetClientList (const QVector <ClientList>&);
+
 private slots:
     void slotReadyRead();
     void slotError(QAbstractSocket::SocketError);
+    void slotSendFile(const QString &login, const QVariant &data);
 private:
     void Send(QByteArray &arrBlock, QDataStream &streamPtr);
     quint16     m_nNextBlockSize;
     QTcpSocket* m_socket;
     QVector<ClientList> chatList;
+
+
 };
 
 

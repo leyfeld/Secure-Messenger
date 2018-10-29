@@ -16,7 +16,6 @@ private:
     QSqlDatabase dbClient;
     const char* cnDbSendMessage="dbClient";
 
-
 public:
      database(const QString&);
     void CreateConnection();

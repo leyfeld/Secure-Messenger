@@ -54,10 +54,18 @@
                 topPadding: 50
             }
             TextField {
+                    id: ipField
+                    objectName: "ipField"
+                    anchors.horizontalCenter: parent.horizontalCenter
+                    topPadding: 10
+                    Material.accent: "#B0BEC5"
+                    placeholderText: "Введите ip-адрес сервера"
+                    width: Math.max(100, (parent.width)*0.5)
+                }
+            TextField {
                     id: logField
                     objectName: "logField"
                     anchors.horizontalCenter: parent.horizontalCenter
-                    topPadding: 10
                     Material.accent: "#B0BEC5"
                     placeholderText: "Введите логин"
                     width: Math.max(100, (parent.width)*0.5)

@@ -21,7 +21,7 @@ Item {
     {
         id:mainColumn
         width: parent.width
-        topPadding: Math.max(100, (parent.height)*0.33)
+        topPadding: Math.max(100, (parent.height)*0.27)
         Text {
             id: txtError
             objectName: "txtError"
@@ -32,6 +32,15 @@ Item {
             font.pixelSize: 16
             anchors.horizontalCenter: parent.horizontalCenter
         }
+        TextField {
+                id: ipRegField
+                objectName: "ipRegField"
+                anchors.horizontalCenter: parent.horizontalCenter
+                Material.accent: "#B0BEC5"
+                placeholderText: "IP-адрес сервера"
+                width: Math.max(100, (parent.width)*0.5)
+
+            }
 
         TextField {
                 id: nameRegField

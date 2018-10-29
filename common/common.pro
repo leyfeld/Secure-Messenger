@@ -7,7 +7,7 @@ QT       += sql
 QT       -= gui
 
 TARGET = ../libs/common
-message($$OUT_PWD);
+message($$OUT_PWD)
 TEMPLATE = lib
 CONFIG += staticlib
 
