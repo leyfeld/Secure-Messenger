@@ -34,7 +34,8 @@ SOURCES += \
 RESOURCES += \
     qml.qrc
 
-
+RESOURCES += \
+    cert.qrc
 
 HEADERS += \
     qmlconnect.h \

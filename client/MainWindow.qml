@@ -300,10 +300,15 @@ Item {
                 anchors.bottomMargin: 49
                 anchors.left: parent.left
                 anchors.leftMargin: 20
+                visible:false;
                 onClicked: {
-                    filename.text = " ";
-                    checkBox.checked = false
                     qmlConnection.cancelFile()
+                    checkBox.visible=false
+                    filename.visible=false
+                    svMessage.height=350
+//                    filename.text = " ";
+//                    checkBox.checked = false
+//                    qmlConnection.cancelFile()
                 }
             }
 
@@ -339,7 +344,10 @@ Item {
                 folder: shortcuts.home
                 onAccepted:
                 {
+                    checkBox.visible=true
                     checkBox.checked = true
+                    filename.visible=true
+                    svMessage.height=325
                     qmlConnection.chooseFile(this.fileUrl)
                 }
             }

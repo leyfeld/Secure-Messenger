@@ -34,7 +34,7 @@ public:
     QVector <Messagelist> mesList;
     void SetRootObj (QObject* RObject=nullptr);
     void OpenClientDB();
-    void CreateConnection(QString& );
+    void CreateConnection(const QString &ip);
 
 
 signals:

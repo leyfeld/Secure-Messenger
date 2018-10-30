@@ -13,7 +13,8 @@ class ChatProtocol: public QObject
 {
     Q_OBJECT
 public:
-    ChatProtocol(const QString &strHost, int nPort);
+    ChatProtocol();
+    void ConnectEncrypted(const QString &strHost, int nPort);
     void SendRegistrationToServer(const QString& login, const QString& name, const QString& password);
     void SendLoginToServer(const QString& login,const QString& password);
     void SendRefreshChatList();
@@ -36,6 +37,7 @@ signals:
     void SigSendFileTo(const QString& login);
     void SigAllFile(const QString &whosend, const QString &filename, const QDateTime &time);
     void SigStopSendFile(const QString &filename);
+    void SigSendInfo();
 
 private slots:
     void slotReadyRead();

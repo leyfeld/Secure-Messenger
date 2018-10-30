@@ -15,14 +15,14 @@
 #include <QThreadPool>
 #include <QMutexLocker>
 
-ChatProtocol::ChatProtocol(const QString& strHost, int nPort)
+ChatProtocol::ChatProtocol()
     : m_nNextBlockSize(0)
 {
     chatList.resize(0);
     m_socket = new QSslSocket(this);
     m_socket->disconnectFromHost();
     QByteArray cert;
-    QFile file_cert("/Users/leyfeld/Documents/projects/tasks/testCert/sc.crt");
+    QFile file_cert(":/cert/sc.crt");
     if(file_cert.open(QIODevice::ReadOnly))
     {
         cert = file_cert.readAll();
@@ -30,13 +30,20 @@ ChatProtocol::ChatProtocol(const QString& strHost, int nPort)
     }
     QSslCertificate ssl_cert(cert);
     m_socket->addCaCertificate(ssl_cert);
-    m_socket->setLocalCertificate(ssl_cert);
+    //m_socket->setLocalCertificate(ssl_cert);
+    m_socket->setProtocol(QSsl::AnyProtocol);
     connect(m_socket, SIGNAL(sslErrors(const QList<QSslError>&)),
             this, SLOT(slotSslErrorOccured(const QList<QSslError>&)));
-    m_socket->connectToHostEncrypted(strHost, nPort);
-    connect(m_socket, SIGNAL(connected()), SIGNAL(SigConnected()));
+
+    connect(m_socket, SIGNAL(encrypted()), SIGNAL(SigConnected()));
     connect(m_socket, SIGNAL(readyRead()), SLOT(slotReadyRead()));
     connect(m_socket, SIGNAL(error(QAbstractSocket::SocketError)),this, SLOT(slotError(QAbstractSocket::SocketError)));
+
+}
+
+void ChatProtocol::ConnectEncrypted(const QString &strHost, int nPort)
+{
+    m_socket->connectToHostEncrypted(strHost, nPort);
 }
 
 void ChatProtocol::slotSslErrorOccured(const QList<QSslError> & error) {
@@ -249,7 +256,7 @@ void ChatProtocol::slotError(QAbstractSocket::SocketError err)
                      err == QAbstractSocket::ConnectionRefusedError ?
                      "The connection was refused." :
                      QString(m_socket->errorString()) );
-    //emit SigErrorHappened(strError);
+    emit SigErrorHappened(strError);
 }
 
 void ChatProtocol::slotSendFile(const QString &login, const QVariant &data)

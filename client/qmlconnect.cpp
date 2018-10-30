@@ -7,14 +7,14 @@
 #include <QVariant>
 #include <QVector>
 
-qmlConnect::qmlConnect()
+qmlConnect::qmlConnect() : client(new ChatProtocol())
 {
-
-
+//    CreateConnection();
 }
-void qmlConnect::CreateConnection(QString &ipaddr)
+void qmlConnect::CreateConnection(const QString& ip)
 {
-        client.reset(new ChatProtocol (ipaddr, 2323));
+        //client.reset(new ChatProtocol (ip, 2323));
+
         connect(client.get(), SIGNAL(SigGetMessage(const QString &, const QString &, const QDateTime)),this,
                 SLOT(slotReadMessage(const QString &, const QString &, const QDateTime& )));
         connect(client.get(), SIGNAL(SigAllFile(const QString &, const QString &, const QDateTime)),this,
@@ -26,8 +26,10 @@ void qmlConnect::CreateConnection(QString &ipaddr)
         connect(client.get(), SIGNAL (SigGetFile(const QString &)),this, SLOT(slotGetFile(const QString &)));
         connect(client.get(), SIGNAL(SigSendFileTo(const QString&)), this, SLOT(transportFile(QString)));
         connect(client.get(), SIGNAL (SigErrorHappened(const QString& )),
-                    this, SLOT(slotServerError(const QString& )));
+                this, SLOT(slotServerError(const QString& )));
         connect(client.get(),SIGNAL(SigConnected()),this,SLOT(slotServerConnected()));
+
+        client->ConnectEncrypted(ip, 2323);
 }
 void qmlConnect::SetRootObj(QObject* RObj)
 {
@@ -55,6 +57,21 @@ void qmlConnect::slotServerConnected()
         client->SendLoginToServer(log,password);
     }
 }
+//void qmlConnect::enterForm()
+//{
+//    //console.log("We are in Enter");
+//    qDebug()<<"We are in Enter";
+//    fldLogin=viewer->findChild<QObject*>("logField");
+//    fldPassword=viewer->findChild<QObject*>("pswField");
+
+//    QString log, password;
+
+//    log=(fldLogin->property("text")).toString();
+//    password=(fldPassword->property("text")).toString();
+//    qDebug()<<log<<" "<<password;
+//    myLogin=log;
+//    client->SendLoginToServer(log,password);
+//}
 void qmlConnect::enterForm()
 {
     //console.log("We are in Enter");
@@ -69,24 +86,23 @@ void qmlConnect::enterForm()
 
     qDebug()<<ip;
     CreateConnection(ip);
-
 }
 
 void qmlConnect::registrationForm()
 {
-    //console.log("We are in Enter");
-    qDebug()<<"We are in Registration";
+//    //console.log("We are in Enter");
+//    qDebug()<<"We are in Registration";
 
-    fldIP=viewer->findChild<QObject*>("ipRegField");
-    fldName=viewer->findChild<QObject*>("nameRegField");
-    fldLogin=viewer->findChild<QObject*>("logRegField");
-    fldPassword=viewer->findChild<QObject*>("pswRegField");
+//    fldIP=viewer->findChild<QObject*>("ipRegField");
+//    fldName=viewer->findChild<QObject*>("nameRegField");
+//    fldLogin=viewer->findChild<QObject*>("logRegField");
+//    fldPassword=viewer->findChild<QObject*>("pswRegField");
 
-    QString ip;
+//    QString ip;
 
-    ip=(fldIP->property("text")).toString();
-    CreateConnection(ip);
-    qDebug()<<ip;
+//    ip=(fldIP->property("text")).toString();
+//    CreateConnection(ip);
+//    qDebug()<<ip;
 
 
 }
