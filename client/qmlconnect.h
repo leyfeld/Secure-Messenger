@@ -14,6 +14,7 @@ class qmlConnect : public QObject
 {
     Q_OBJECT
 private:
+    QObject* fldIP=nullptr;
     QObject* fldLogin=nullptr;
     QObject* fldPassword=nullptr;
     QObject* fldName=nullptr;
@@ -33,6 +34,7 @@ public:
     QVector <Messagelist> mesList;
     void SetRootObj (QObject* RObject=nullptr);
     void OpenClientDB();
+    void CreateConnection(QString& );
 
 
 signals:
@@ -57,7 +59,8 @@ public slots:
    void transportFile(const QString &login);
    void okSendFile();
    void cancelSendFile();
-
+   void slotServerError(const QString& );
+   void slotServerConnected();
 protected:
    QObject *viewer;
 

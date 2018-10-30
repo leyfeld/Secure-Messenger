@@ -362,6 +362,7 @@ Item {
                     lmMessage.append({txtMessage:field1.text,
                                          lmMessage:400})
                     field1.text = ""
+                    filename.text = " "
                 }
             }
                     }

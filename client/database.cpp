@@ -16,17 +16,8 @@ void database::CreateConnection()
         qDebug() << "Can't find db connection";
         return;
     }
-    QString tableName="test";
     QSqlQuery query(dbClient );
 
-    if (!query.exec("create table if not exists SendMessage (login varchar(20), message varchar(256), smData integer)"))
-    {
-        qDebug() << "Can't create table: " << query.lastError().text();
-    }
-    if (!query.exec("create table if not exists ReceiveMessage (login varchar(20), message varchar(256), smData integer)"))
-    {
-        qDebug() << "Can't create table: " << query.lastError().text();
-    }
 }
 
 void database:: InsertSendMessage (const QString& login, const QString& message, const QDateTime& time)
