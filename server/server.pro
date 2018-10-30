@@ -44,3 +44,6 @@ HEADERS += \
 
 LIBS += -lcommon -L$$OUT_PWD/../libs/
 INCLUDEPATH += ../common
+
+RESOURCES += \
+    cert.qrc
