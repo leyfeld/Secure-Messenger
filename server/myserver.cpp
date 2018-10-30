@@ -151,6 +151,16 @@ void MyServer::slotReadClient()
             QString login;
             in >> login >> msgData;
             const QString whosend = m_clientMap.key(pClientSocket);
+            if(!m_clientMap.contains(login))
+            {
+                QMap<QString, QVariant> val;
+                val = msgData.toMap();
+                QString filename;
+                filename = val.value("FILENAME").toString();
+                sendToClient(QString::number(static_cast<int>(ServerError::LoginOffline)), filename, m_clientMap.value(whosend));
+                //in<<static_cast<qint8>(ServerError::LoginOffline);
+                break;
+            }
             sendToClient(QString::number(static_cast<int>(LoginAndSmsProtocol::sendFile)),whosend, msgData, m_clientMap.value(login));
             break;
         }

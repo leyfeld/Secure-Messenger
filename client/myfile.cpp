@@ -9,7 +9,7 @@
 
 FileSender::FileSender(const QString &login,  const QString &filename):m_login(login), m_filename(filename)
 {
-
+    connect(this, SIGNAL(SigStop()), SLOT(slotTransferFile()));
 }
 
 void FileSender::slotTransferFile()
@@ -25,7 +25,7 @@ void FileSender::slotTransferFile()
     {
         qDebug() << "Can't read from file '" << m_filename;
     }
-    while (max_bytes != 0)
+    while((max_bytes != 0) && (m_stopFile != m_filename))
     {
         QMap<QString, QVariant> new_val;
         new_val.insert("FILENAME", m_filename);
@@ -54,6 +54,15 @@ void FileSender::slotTransferFile()
         emit SigSendFile(m_login, new_val);
         bytes_read += byteArray.size();
         delay(100);
-    }
-    file.close();
+      }
+      file.close();
+
+}
+
+
+void FileSender::slotStopTransferFile(const QString &filename)
+{
+    m_stopFile = filename;
+    //m_stop = true;
+    //emit SigStop();
 }

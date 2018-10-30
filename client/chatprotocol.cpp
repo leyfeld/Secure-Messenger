@@ -36,9 +36,7 @@ ChatProtocol::ChatProtocol(const QString& strHost, int nPort)
     m_socket->connectToHostEncrypted(strHost, nPort);
     connect(m_socket, SIGNAL(connected()), SIGNAL(SigConnected()));
     connect(m_socket, SIGNAL(readyRead()), SLOT(slotReadyRead()));
-    connect(m_socket, SIGNAL(error(QAbstractSocket::SocketError)),
-            this,         SLOT(slotError(QAbstractSocket::SocketError))
-           );
+    connect(m_socket, SIGNAL(error(QAbstractSocket::SocketError)),this, SLOT(slotError(QAbstractSocket::SocketError)));
 }
 
 void ChatProtocol::slotSslErrorOccured(const QList<QSslError> & error) {
@@ -48,30 +46,6 @@ void ChatProtocol::slotSslErrorOccured(const QList<QSslError> & error) {
 
 void ChatProtocol::Send(LoginAndSmsProtocol protocolCommand, const QList<QVariant> &params)
 {
-//    QMutexLocker locker(&m_mutex);
-//    QByteArray arrBlock;
-//    QDataStream outStream(&arrBlock, QIODevice::WriteOnly);
-//    outStream.setVersion(QDataStream::Qt_4_2);
-//    outStream << quint16(0) << QDateTime::currentDateTime() << static_cast<quint8>(protocolCommand);
-//    for (const QVariant& param : params)
-//    {
-//        if (param.type() == QVariant::String)
-//        {
-//            outStream << param.toString();
-//        }
-//        else if (typeid(param) == typeid(QVariant))
-//        {
-//            outStream << param;
-//        }
-//        else
-//        {
-//            qDebug() << "Trying to send invalid param type";
-//        }
-//    }
-//    outStream.device()->seek(0);
-//    outStream << quint16(arrBlock.size() - sizeof(quint16));
-//    qDebug() <<"Send: "<<arrBlock.size();
-//    m_socket->write(arrBlock);
     ThreadSend* senderThread = new ThreadSend(protocolCommand, params, m_socket, m_mutex);
     QThreadPool::globalInstance()->start(senderThread);
 }
@@ -181,6 +155,14 @@ void ChatProtocol::slotReadyRead()
         QDateTime   time;
         QString loginProtocol;
         in >> time >> loginProtocol;
+        if(static_cast<ServerError>(loginProtocol.toUInt()) == ServerError::LoginOffline)
+        {
+            QString filename;
+            in >> filename;
+            emit SigStopSendFile(filename);
+            //break;
+        }
+        else{
         switch (static_cast<LoginAndSmsProtocol>(loginProtocol.toUInt()))
         {
             case LoginAndSmsProtocol::registration: // если int = 1
@@ -252,7 +234,7 @@ void ChatProtocol::slotReadyRead()
         default:
             throw std::runtime_error("not implemented switch LoginAndSmsProtocol");
             break;
-        }
+        }}
         m_nNextBlockSize = 0;
         qDebug()<<"000000";
     }
@@ -267,7 +249,7 @@ void ChatProtocol::slotError(QAbstractSocket::SocketError err)
                      err == QAbstractSocket::ConnectionRefusedError ?
                      "The connection was refused." :
                      QString(m_socket->errorString()) );
-    emit SigErrorHappened(strError);
+    //emit SigErrorHappened(strError);
 }
 
 void ChatProtocol::slotSendFile(const QString &login, const QVariant &data)

@@ -35,6 +35,7 @@ signals:
     void SigGetFile(const QString & login);
     void SigSendFileTo(const QString& login);
     void SigAllFile(const QString &whosend, const QString &filename, const QDateTime &time);
+    void SigStopSendFile(const QString &filename);
 
 private slots:
     void slotReadyRead();
