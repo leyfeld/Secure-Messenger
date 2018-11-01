@@ -1,13 +1,13 @@
 #ifndef QMLCONNECT_H
 #define QMLCONNECT_H
 
+#include "chatprotocol.h"
+#include "database.h"
+#include "messagelist.h"
 #include <QObject>
 #include <QDebug>
 #include <QDir>
 #include <memory>
-#include "chatprotocol.h"
-#include "database.h"
-#include "messagelist.h"
 
 
 class qmlConnect : public QObject
@@ -21,11 +21,12 @@ private:
     QObject* btnEnter=nullptr;
     QObject* textArea=nullptr;
     QObject* fldText=nullptr;
-    QObject* txtError=nullptr;
+    QObject* rctError=nullptr;
     QObject* btnTabBar=nullptr;
     QObject* listview=nullptr;
     QString myLogin;
     QString m_attachmentPath;
+    QString fileLogin;
     std::unique_ptr<ChatProtocol> client;
     std::unique_ptr <database> dbClient;
 public: 
@@ -33,7 +34,9 @@ public:
     QVector <Messagelist> mesList;
     void SetRootObj (QObject* RObject=nullptr);
     void OpenClientDB();
-    void CreateConnection(QString& );
+    void CreateConnection(const QString &ip);
+    bool IsLogStatusOk (const QString&);
+    bool IsForbidSign(const QString &);
 
 
 signals:
@@ -41,6 +44,7 @@ signals:
     void toChatList(const QString & log, const bool & offOn);
     void toPrevMessageList(const QString & direction, const QString & mes);
     void toMessageList(const QString & mes);
+    void toGetFile();
 
 public slots:
    void enterForm ();
@@ -53,9 +57,12 @@ public slots:
    void slotReadMessage(const QString& log, const QString& me, const QDateTime & time);
    void slotRegistrationError(ServerError);
    void chatListChange(const QVector <ClientList> & chatList);
+   void slotGetFile(const QString & login);
+   void transportFile(const QString &login);
+   void okSendFile();
+   void cancelSendFile();
    void slotServerError(const QString& );
    void slotServerConnected();
-
 protected:
    QObject *viewer;
 

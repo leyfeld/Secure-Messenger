@@ -1,5 +1,6 @@
 #include "database.h"
 #include "clientlist.h"
+#include <QSslSocket>
 
 
 
@@ -76,7 +77,7 @@ void ServDb:: ServInsert(const QString &login, const QString &name, const QStrin
     }
 }
 
-void ServDb::ChatList(const QMap<QString, QTcpSocket*> &serverMap, QVector<ClientList>& chatList)
+void ServDb::ChatList(const QMap<QString, QAbstractSocket*> &serverMap, QVector<ClientList>& chatList)
 {
 
     QSqlDatabase db = QSqlDatabase::database(m_serverDatabase);

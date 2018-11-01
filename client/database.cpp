@@ -16,9 +16,7 @@ void database::CreateConnection()
         qDebug() << "Can't find db connection";
         return;
     }
-
     QSqlQuery query(dbClient );
-
 
 }
 

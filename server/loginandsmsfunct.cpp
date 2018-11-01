@@ -1,8 +1,9 @@
 #include "loginandsmsfunct.h"
 #include "clientlist.h"
+#include <QSslSocket>
 
 
-ServerError Registration(QTcpSocket* pClientSocket, QMap <QString, QTcpSocket*>& m_clientMap, QVector<ClientList> &chatList,
+ServerError Registration(QSslSocket* pClientSocket, QMap <QString, QAbstractSocket*>& m_clientMap, QVector<ClientList> &chatList,
                                 ServDb* m_sdb, QString& login, QString& name, QString& password)
 {
     if((login.isNull())||(name.isNull())||(password.isNull()))
@@ -23,7 +24,7 @@ ServerError Registration(QTcpSocket* pClientSocket, QMap <QString, QTcpSocket*>&
     return ServerError::Success;
 }
 
-ServerError Login(QTcpSocket* pClientSocket, QMap <QString, QTcpSocket*>& m_clientMap,
+ServerError Login(QSslSocket* pClientSocket, QMap<QString, QAbstractSocket *> &m_clientMap,
                                 QVector<ClientList> &chatList,
                                 ServDb* m_sdb, QString& login, QString& password)
 {

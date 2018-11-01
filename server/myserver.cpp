@@ -4,7 +4,6 @@
 #include "loginandsmsfunct.h"
 #include "messageprotocol.h"
 #include <QVBoxLayout>
-#include <QMessageBox>
 #include <QLabel>
 #include <QDateTime>
 #include <QList>
@@ -14,11 +13,10 @@
 #include <QSqlDatabase>
 #include <QSqlDriverPlugin>
 #include <QDir>
-#include <QTcpServer>
 #include <QTextEdit>
-#include <QTcpSocket>
 #include <QDataStream>
-
+#include <QTcpServer>
+#include <QSslSocket>
 
 
 
@@ -27,13 +25,14 @@ MyServer::MyServer(int nPort, QWidget* pwgt /*=0*/) : QWidget(pwgt), m_nNextBloc
     QString dbPath = QDir::currentPath() + "/server.db";
     qDebug() << "Current Server Db path: " << dbPath;
     m_sdb.reset(new ServDb(dbPath));
-    m_ptcpServer = new QTcpServer(this);
-    if (!m_ptcpServer->listen(QHostAddress::Any, nPort)) {
-        QMessageBox::critical(0, "Server Error", "Unable to start the server:" + m_ptcpServer->errorString());
-        m_ptcpServer->close();
+    m_socketServer = new SslServer(this);
+    if (!m_socketServer->listen(QHostAddress::Any, nPort)) {
+        QMessageBox::critical(0, "Server Error", "Unable to start the server:" + m_socketServer->errorString());
+        m_socketServer->close();
         return;
     }
-    connect(m_ptcpServer, SIGNAL(newConnection()), this, SLOT(slotNewConnection()));
+
+    connect(m_socketServer, SIGNAL(newConnection()), this, SLOT(slotNewConnection()));
 
     m_ptxt = new QTextEdit;
     m_ptxt->setReadOnly(true);
@@ -47,26 +46,31 @@ MyServer::MyServer(int nPort, QWidget* pwgt /*=0*/) : QWidget(pwgt), m_nNextBloc
 }
 /*virtual*/ void MyServer::slotNewConnection()
 {
-    QTcpSocket* pClientSocket = m_ptcpServer->nextPendingConnection();
-    m_clientList.push_back(pClientSocket);
-    //sendToClient(QString::number(static_cast<quint8>(LoginAndSmsProtocol::newConnect)),"Create connection",pClientSocket);
+   QSslSocket* pClientSocket = qobject_cast<QSslSocket*>(m_socketServer->nextPendingConnection());
     m_sdb->createConnection();
+
     connect(pClientSocket, SIGNAL(disconnected()), this, SLOT(slotDeleteMap()));
     connect(pClientSocket, SIGNAL(disconnected()), pClientSocket, SLOT(deleteLater()));
     connect(pClientSocket, SIGNAL(readyRead()), this, SLOT(slotReadClient()));
 
-   // sendToClient("Server Response: Connected!");
+
+    qDebug()<<"slotnewconnection!";
 }
 void MyServer::slotDeleteMap()
 {
-   QTcpSocket* pClientSocket = (QTcpSocket*)sender();
+   QSslSocket* pClientSocket = (QSslSocket*)sender();
    QString nameClient = m_clientMap.key(pClientSocket);
    m_clientMap.remove(nameClient);
 }
 
+void MyServer::slotEncryptedReady()
+{
+    qDebug()<<"slotEncryptedReady!";
+}
+
 void MyServer::slotReadClient()
 {
-    QTcpSocket* pClientSocket = (QTcpSocket*)sender();
+    QSslSocket* pClientSocket = (QSslSocket*)sender();
     QDataStream in(pClientSocket);
     in.setVersion(QDataStream::Qt_4_2);
     for (;;)
@@ -78,6 +82,7 @@ void MyServer::slotReadClient()
                 break;
             }
             in >> m_nNextBlockSize;
+            qDebug() <<"read block server: " << m_nNextBlockSize;
         }
         if (pClientSocket->bytesAvailable() < m_nNextBlockSize)
         {
@@ -86,6 +91,7 @@ void MyServer::slotReadClient()
         QDateTime   time;
         quint8 loginProtocol = 0;
         in >> time >> loginProtocol;
+        qDebug() << "Server get loginProtocol: " << loginProtocol;
         switch (static_cast<LoginAndSmsProtocol>(loginProtocol))
         {
         case LoginAndSmsProtocol::registration: // если int = 1
@@ -146,7 +152,44 @@ void MyServer::slotReadClient()
             QString login;
             in >> login >> msgData;
             const QString whosend = m_clientMap.key(pClientSocket);
+            if(!m_clientMap.contains(login))
+            {
+                QMap<QString, QVariant> val;
+                val = msgData.toMap();
+                QString filename;
+                filename = val.value("FILENAME").toString();
+                sendToClient(QString::number(static_cast<int>(ServerError::LoginOffline)), filename, m_clientMap.value(whosend));
+                //in<<static_cast<qint8>(ServerError::LoginOffline);
+                break;
+            }
             sendToClient(QString::number(static_cast<int>(LoginAndSmsProtocol::sendFile)),whosend, msgData, m_clientMap.value(login));
+            break;
+        }
+        case LoginAndSmsProtocol::reqwestFileInfo:
+        {
+            QString name;
+            //QString filename;
+            in >>name ;
+            if(!m_clientMap.contains(name))
+            {
+                in<<static_cast<qint8>(ServerError::LoginOffline);
+                break;
+            }
+            const QString whosend = m_clientMap.key(pClientSocket);
+            sendToClient(QString::number(static_cast<int>(LoginAndSmsProtocol::reqwestFileInfo)),whosend, m_clientMap.value(name));
+            break;
+        }
+        case LoginAndSmsProtocol::answerSendFile:
+        {
+            QString name;
+            in >> name;
+            if(!m_clientMap.contains(name))
+            {
+                in<<static_cast<qint8>(ServerError::LoginOffline);
+                break;
+            }
+            const QString whosend = m_clientMap.key(pClientSocket);
+            sendToClient(QString::number(static_cast<int>(LoginAndSmsProtocol::answerSendFile)),whosend, m_clientMap.value(name));
             break;
         }
         default:
@@ -157,7 +200,7 @@ void MyServer::slotReadClient()
 }
 
 template <typename T>
-void MyServer::sendToClient(const QString& str2, const T& str, QTcpSocket* pSocket)
+void MyServer::sendToClient(const QString& str2, const T& str, QAbstractSocket *pSocket)
 {
     QByteArray  arrBlock;
     QDataStream out(&arrBlock, QIODevice::WriteOnly);
@@ -166,11 +209,12 @@ void MyServer::sendToClient(const QString& str2, const T& str, QTcpSocket* pSock
 
     out.device()->seek(0);
     out << quint16(arrBlock.size() - sizeof(quint16));
+    qDebug()<<"send arrblock from server: "<< arrBlock.size();
     pSocket->write(arrBlock);
 
 }
 
-void MyServer::sendToClient(const QString& protocol,const QString& whosend ,const QVariant& msgData, QTcpSocket* pSocket)
+void MyServer::sendToClient(const QString& protocol,const QString& whosend ,const QVariant& msgData, QAbstractSocket* pSocket)
 {
     QByteArray  arrBlock;
     QDataStream out(&arrBlock, QIODevice::WriteOnly);
@@ -179,5 +223,6 @@ void MyServer::sendToClient(const QString& protocol,const QString& whosend ,cons
 
     out.device()->seek(0);
     out << quint16(arrBlock.size() - sizeof(quint16));
+    qDebug()<<"send arrblock from server: "<< arrBlock.size();
     pSocket->write(arrBlock);
 }

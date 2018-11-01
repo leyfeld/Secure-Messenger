@@ -14,14 +14,17 @@ public:
 
 signals:
     void SigSendFile(const QString &login, const QVariant &data);
-    void SigGetFile(const QString &whosend, const QString &filename);
+    void SigStop();
 
 public slots:
     void slotTransferFile();
+    void slotStopTransferFile(const QString &filename);
 
 private:
     QString m_login;
     QString m_filename;
+    QString m_stopFile;
+    //bool m_stop;
 };
 
 #endif // MYFILE_H

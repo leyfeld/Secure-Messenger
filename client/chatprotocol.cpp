@@ -1,80 +1,89 @@
 #include "chatprotocol.h"
 #include "messageprotocol.h"
 #include "common.h"
+#include "threadsend.h"
 #include <QString>
 #include <QByteArray>
 #include <QDateTime>
-#include <QTcpSocket>
 #include <QFileInfo>
 #include <QDataStream>
 #include <QBuffer>
 #include <QMap>
 #include <QDir>
+#include <QSslCertificate>
+#include <QSslSocket>
+#include <QThreadPool>
+#include <QMutexLocker>
 
-ChatProtocol::ChatProtocol(const QString& strHost, int nPort)
+ChatProtocol::ChatProtocol()
     : m_nNextBlockSize(0)
 {
     chatList.resize(0);
-    //m_file = new MyFile();
-    m_socket = new QTcpSocket(this);
-    m_socket->connectToHost(strHost, nPort);
-    connect(m_socket, SIGNAL(connected()), SIGNAL(SigConnected()));
+    m_socket = new QSslSocket(this);
+    m_socket->disconnectFromHost();
+    QByteArray cert;
+    QFile file_cert(":/cert/sc.crt");
+    if(file_cert.open(QIODevice::ReadOnly))
+    {
+        cert = file_cert.readAll();
+        file_cert.close();
+    }
+    QSslCertificate ssl_cert(cert);
+    m_socket->addCaCertificate(ssl_cert);
+    //m_socket->setLocalCertificate(ssl_cert);
+    m_socket->setProtocol(QSsl::AnyProtocol);
+    connect(m_socket, SIGNAL(sslErrors(const QList<QSslError>&)),
+            this, SLOT(slotSslErrorOccured(const QList<QSslError>&)));
+
+    connect(m_socket, SIGNAL(encrypted()), SIGNAL(SigConnected()));
     connect(m_socket, SIGNAL(readyRead()), SLOT(slotReadyRead()));
-    connect(m_socket, SIGNAL(error(QAbstractSocket::SocketError)),
-            this,         SLOT(slotError(QAbstractSocket::SocketError))
-           );
-    //connect(m_file, SIGNAL(SigSendFile(QString,QVariant)), this, SLOT(slotSendFile(QString,QVariant)));
+    connect(m_socket, SIGNAL(error(QAbstractSocket::SocketError)),this, SLOT(slotError(QAbstractSocket::SocketError)));
+
 }
-void ChatProtocol::Send(QByteArray& arrBlock, QDataStream& streamPtr)
+
+void ChatProtocol::ConnectEncrypted(const QString &strHost, int nPort)
 {
-    streamPtr.device()->seek(0);
-    streamPtr << quint16(arrBlock.size() - sizeof(quint16));
-    m_socket->write(arrBlock);
+    m_socket->connectToHostEncrypted(strHost, 2323);
+}
+
+void ChatProtocol::slotSslErrorOccured(const QList<QSslError> & error) {
+    qDebug() << "sslErrorOccured:" << error;
+    m_socket->ignoreSslErrors(error);
+}
+
+void ChatProtocol::Send(LoginAndSmsProtocol protocolCommand, const QList<QVariant> &params)
+{
+    ThreadSend* senderThread = new ThreadSend(protocolCommand, params, m_socket, m_mutex);
+    QThreadPool::globalInstance()->start(senderThread);
 }
 void ChatProtocol::SendRegistrationToServer(const QString& login,const QString& name, const QString& password)
 {
-    QByteArray arrBlock;
-    QDataStream outStream(&arrBlock, QIODevice::WriteOnly);
-    outStream.setVersion(QDataStream::Qt_4_2);
-    outStream << quint16(0) <<QDateTime::currentDateTime() << static_cast<quint8>(LoginAndSmsProtocol::registration) << login << name << password;
-    Send(arrBlock, outStream);
+    qDebug() <<"SendRegistrationToServer: ";
+    Send(LoginAndSmsProtocol::registration, {login, name, password});
 }
 
 void ChatProtocol::SendLoginToServer(const QString &login, const QString &password)
 {
-    QByteArray arrBlock;
-    QDataStream outStream(&arrBlock, QIODevice::WriteOnly);
-    outStream.setVersion(QDataStream::Qt_4_2);
-    outStream << quint16(0) << QDateTime::currentDateTime() << static_cast<quint8>(LoginAndSmsProtocol::login) << login << password;
-    Send(arrBlock, outStream);
+    qDebug() <<"SendLoginToServer: ";
+    Send(LoginAndSmsProtocol::login, {login, password});
 }
 
 void ChatProtocol::SendMessageToClient(const QString &name,const QString &sms)
 {
-    QByteArray arrBlock;
-    QDataStream outStream(&arrBlock, QIODevice::WriteOnly);
-    outStream.setVersion(QDataStream::Qt_4_2);
-    outStream << quint16(0) << QDateTime::currentDateTime() << static_cast<quint8>(LoginAndSmsProtocol::mes) << name << sms;
-    Send(arrBlock, outStream);
+    qDebug() <<"SendMessageToClient: ";
+    Send(LoginAndSmsProtocol::mes, {name,sms});
 }
 void ChatProtocol::SendRefreshChatList()
 {
-    QByteArray arrBlock;
-    QDataStream outStream(&arrBlock, QIODevice::WriteOnly);
-    outStream.setVersion(QDataStream::Qt_4_2);
-    outStream << quint16(0) << QDateTime::currentDateTime() << static_cast<quint8>(LoginAndSmsProtocol::sendChatList);
-    Send(arrBlock, outStream);
+    qDebug() <<"SendRefreshChatList: ";
+    Send(LoginAndSmsProtocol::sendChatList, {});
 }
 void ChatProtocol::SendFile(const QString& login, const QVariant &data)
 {
-    QByteArray arrBlock;
-    QDataStream outStream(&arrBlock, QIODevice::WriteOnly);
-    outStream.setVersion(QDataStream::Qt_4_2);
-    outStream << quint16(0) << QDateTime::currentDateTime() << static_cast<quint8>(LoginAndSmsProtocol::sendFile)
-              << login << data;
-    Send(arrBlock, outStream);
+    qDebug() <<"SendFile: ";
+    Send(LoginAndSmsProtocol::sendFile, {login, data});
 }
-void ChatProtocol::WriteAndReadFile(const QString &whosend, const QVariant &data)
+void ChatProtocol::WriteAndReadFile(const QString &whosend, const QVariant &data, const QDateTime &time)
 {
     QMap<QString, QVariant> val;
     val = data.toMap();
@@ -114,8 +123,20 @@ void ChatProtocol::WriteAndReadFile(const QString &whosend, const QVariant &data
     }
     if(endOrNext == "end")
     {
-        //emit SigGetFile(whosend, filename);
+        emit SigAllFile(whosend,new_dir, time);
     }
+}
+
+void ChatProtocol::ReqwestAddFile(const QString& loginSentTo, const QString &filename)
+{
+    qDebug() <<"ReqwestAddFile: ";
+    Send(LoginAndSmsProtocol::reqwestFileInfo, {loginSentTo});
+}
+
+void ChatProtocol::AnswerOnReqwestSendFile(const QString &loginSentTo)
+{
+    qDebug() <<"AnswerOnReqwestSendFile: ";
+    Send(LoginAndSmsProtocol::answerSendFile, {loginSentTo});
 }
 void ChatProtocol::slotReadyRead()
 {
@@ -125,11 +146,13 @@ void ChatProtocol::slotReadyRead()
     {
         if (!m_nNextBlockSize)
         {
-            if (static_cast<quint16>(m_socket->bytesAvailable()) < static_cast<qint64>(sizeof(quint16)))
+            if (m_socket->bytesAvailable() < static_cast<qint64>(sizeof(quint16)))
             {
                 break;
             }
             in >> m_nNextBlockSize;
+            qDebug() <<"read block: " << m_nNextBlockSize;
+            qDebug() <<"read bytesAvailable: " << m_socket->bytesAvailable();
         }
 
         if (m_socket->bytesAvailable() < m_nNextBlockSize)
@@ -139,6 +162,14 @@ void ChatProtocol::slotReadyRead()
         QDateTime   time;
         QString loginProtocol;
         in >> time >> loginProtocol;
+        if(static_cast<ServerError>(loginProtocol.toUInt()) == ServerError::LoginOffline)
+        {
+            QString filename;
+            in >> filename;
+            emit SigStopSendFile(filename);
+            //break;
+        }
+        else{
         switch (static_cast<LoginAndSmsProtocol>(loginProtocol.toUInt()))
         {
             case LoginAndSmsProtocol::registration: // если int = 1
@@ -152,6 +183,7 @@ void ChatProtocol::slotReadyRead()
             {
                 QString serAnswer;
                 in >> serAnswer;
+                qDebug() <<"LoginAndSmsProtocol::login: ";
                 emit SigAnswerLogin(static_cast<ServerError>(serAnswer.toUInt()));
                 break;
             }
@@ -159,6 +191,7 @@ void ChatProtocol::slotReadyRead()
             {
                 in >> chatList;
                 qDebug() << chatList[0].m_login<<chatList[0].m_name<<chatList[0].m_online<<chatList.size();
+                qDebug() <<"LoginAndSmsProtocol::sendChatList: ";
                 emit SigGetClientList(chatList);
                 break;
             }
@@ -185,19 +218,32 @@ void ChatProtocol::slotReadyRead()
                 QString whosend;
                 QVariant msgData;
                 in >> whosend >> msgData ;
-                WriteAndReadFile(whosend, msgData);
+                WriteAndReadFile(whosend, msgData, time);
                 break;
             }
-//        case LoginAndSmsProtocol::newConnect:
-//        {
-
-//            break;
-//        }
+            case LoginAndSmsProtocol::reqwestFileInfo:
+            {
+                QString whosend;
+                //QString filename;
+                in >> whosend ;
+                qDebug() <<"LoginAndSmsProtocol::reqwestFileInfo:от кого запрос "<< whosend;
+                emit SigGetFile(whosend);
+                break;
+            }
+            case LoginAndSmsProtocol::answerSendFile:
+            {
+                QString whosend;
+                in>>whosend;
+                qDebug() <<"LoginAndSmsProtocol::answerSendFile:кто прислал ответ "<< whosend;
+                emit SigSendFileTo(whosend);
+                break;
+            }
         default:
             throw std::runtime_error("not implemented switch LoginAndSmsProtocol");
-            //break;
-        }
+            break;
+        }}
         m_nNextBlockSize = 0;
+        qDebug()<<"000000";
     }
  }
 void ChatProtocol::slotError(QAbstractSocket::SocketError err)
@@ -217,4 +263,3 @@ void ChatProtocol::slotSendFile(const QString &login, const QVariant &data)
 {
     SendFile(login,data);
 }
-

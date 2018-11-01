@@ -7,23 +7,29 @@
 #include <QVariant>
 #include <QVector>
 
-qmlConnect::qmlConnect()
+qmlConnect::qmlConnect() : client(new ChatProtocol())
 {
-
-
+//    CreateConnection();
 }
-void qmlConnect::CreateConnection(QString &ipaddr)
+void qmlConnect::CreateConnection(const QString& ip)
 {
-        client.reset(new ChatProtocol (ipaddr, 2323));
+        //client.reset(new ChatProtocol (ip, 2323));
+
         connect(client.get(), SIGNAL(SigGetMessage(const QString &, const QString &, const QDateTime)),this,
+                SLOT(slotReadMessage(const QString &, const QString &, const QDateTime& )));
+        connect(client.get(), SIGNAL(SigAllFile(const QString &, const QString &, const QDateTime)),this,
                 SLOT(slotReadMessage(const QString &, const QString &, const QDateTime& )));
         connect(client.get(), SIGNAL(SigAnswerReg(ServerError)),this, SLOT(slotRegistrationError(ServerError)));
         connect(client.get(), SIGNAL(SigAnswerLogin(ServerError)),this, SLOT(slotRegistrationError(ServerError)));
         connect(client.get(), SIGNAL (SigGetClientList(const QVector <ClientList> & )),
                 this, SLOT(chatListChange(const QVector <ClientList> & )));
+        connect(client.get(), SIGNAL (SigGetFile(const QString &)),this, SLOT(slotGetFile(const QString &)));
+        connect(client.get(), SIGNAL(SigSendFileTo(const QString&)), this, SLOT(transportFile(QString)));
         connect(client.get(), SIGNAL (SigErrorHappened(const QString& )),
-                    this, SLOT(slotServerError(const QString& )));
+                this, SLOT(slotServerError(const QString& )));
         connect(client.get(),SIGNAL(SigConnected()),this,SLOT(slotServerConnected()));
+
+        client->ConnectEncrypted(ip, 2323);
 }
 void qmlConnect::SetRootObj(QObject* RObj)
 {
@@ -39,7 +45,8 @@ void qmlConnect::slotServerConnected()
         password=(fldPassword->property("text")).toString();
         qDebug()<<vName<<" "<<log<<" "<<password;
         myLogin=log;
-        client->SendRegistrationToServer(log,vName,password);
+        if(IsLogStatusOk(log))
+            client->SendRegistrationToServer(log,vName,password);
     }
     if(!fldName)
     {
@@ -51,6 +58,21 @@ void qmlConnect::slotServerConnected()
         client->SendLoginToServer(log,password);
     }
 }
+//void qmlConnect::enterForm()
+//{
+//    //console.log("We are in Enter");
+//    qDebug()<<"We are in Enter";
+//    fldLogin=viewer->findChild<QObject*>("logField");
+//    fldPassword=viewer->findChild<QObject*>("pswField");
+
+//    QString log, password;
+
+//    log=(fldLogin->property("text")).toString();
+//    password=(fldPassword->property("text")).toString();
+//    qDebug()<<log<<" "<<password;
+//    myLogin=log;
+//    client->SendLoginToServer(log,password);
+//}
 void qmlConnect::enterForm()
 {
     //console.log("We are in Enter");
@@ -65,7 +87,6 @@ void qmlConnect::enterForm()
 
     qDebug()<<ip;
     CreateConnection(ip);
-
 }
 
 void qmlConnect::registrationForm()
@@ -95,21 +116,17 @@ void qmlConnect::messageForm()
         QString log, message;
         log=(btnTabBar->property("text")).toString();
         message=(fldText->property("text")).toString();
-        dbClient->InsertSendMessage(log, message, QDateTime::currentDateTime());
         qDebug()<<" "<<log<<" "<<message;
         if(!m_attachmentPath.isEmpty())
         {
-            QThread *workerThread= new QThread();
-            FileSender* m_file = new FileSender(log, m_attachmentPath);
-            m_file->moveToThread(workerThread);
-            connect(workerThread, SIGNAL(started()), m_file, SLOT(slotTransferFile()));
-            connect(workerThread, SIGNAL(finished()), workerThread, SLOT(QObject::deleteLater()));
-            connect(m_file, SIGNAL(SigSendFile(const QString&, const QVariant&)), client.get(), SLOT(slotSendFile(const QString&, const QVariant&)));
-            workerThread->start();
-            //client->TransferFile(log, m_attachmentPath);
+            fileLogin.clear();
+            fileLogin = log;
+            QString filename = QFileInfo(m_attachmentPath).fileName();
+            client->ReqwestAddFile(log, filename);
         }
         if(!message.isEmpty())
         {
+            dbClient->InsertSendMessage(log, message, QDateTime::currentDateTime());
             client->SendMessageToClient(log,message);
         }
 }
@@ -121,7 +138,10 @@ void qmlConnect::chooseFile(const QUrl& url)
 }
 void qmlConnect::slotServerError(const QString& errorCode)
 {
-    txtError=viewer->findChild<QObject*>("txtError");
+    if(rctError)
+        rctError->setProperty("visible", true);
+
+    QObject* txtError=viewer->findChild<QObject*>("txtError");
     txtError->setProperty("text",errorCode);
 }
 void qmlConnect::cancelFile()
@@ -140,7 +160,7 @@ void qmlConnect::messageList(const QString & log)
 }
 void qmlConnect::slotRegistrationError(ServerError errorCode)
 {
-    txtError=viewer->findChild<QObject*>("txtError");
+    QObject* txtError=viewer->findChild<QObject*>("txtError");
     switch(errorCode)
     {
         case ServerError::Success:
@@ -162,13 +182,46 @@ void qmlConnect::slotRegistrationError(ServerError errorCode)
 }
 void qmlConnect::chatListChange(const QVector <ClientList>& chatList)
 {
+    rctError=viewer->findChild<QObject*>("rctError");
+    //QObject* txtError=viewer->findChild<QObject*>("txtError");
     qDebug()<<"Here we are!"<<chatList.size();
     for(int i=0;i<chatList.size();i++)
     {
         emit toChatList(chatList[i].m_login, chatList[i].m_online);
     }
 //    listview=viewer->findChild<QObject*>("listClient");
-//    listview->setProperty("text", " ");
+    //    listview->setProperty("text", " ");
+}
+
+void qmlConnect::slotGetFile(const QString & login)
+{
+    fileLogin.clear();
+    fileLogin = login;
+    emit toGetFile();
+}
+
+void qmlConnect::transportFile(const QString& login)
+{
+    QThread *workerThread= new QThread();
+    FileSender* m_file = new FileSender(login, m_attachmentPath);
+    m_file->moveToThread(workerThread);
+    connect(workerThread, SIGNAL(started()), m_file, SLOT(slotTransferFile()));
+    connect(client.get(), SIGNAL(SigStopSendFile(const QString &)), m_file, SLOT(slotStopTransferFile(const QString &)));
+    connect(workerThread, SIGNAL(finished()), workerThread, SLOT(deleteLater()));
+    connect(m_file, SIGNAL(SigSendFile(const QString&, const QVariant&)),
+            client.get(), SLOT(slotSendFile(const QString&, const QVariant&)));
+    workerThread->start();
+    m_attachmentPath.clear();
+}
+
+void qmlConnect::okSendFile()
+{
+    client->AnswerOnReqwestSendFile(fileLogin);
+}
+
+void qmlConnect::cancelSendFile()
+{
+    client->AnswerOnReqwestSendFile(fileLogin);
 }
 void qmlConnect::slotReadMessage(const QString& log, const QString& mes, const QDateTime & time)
 {
@@ -187,4 +240,35 @@ void qmlConnect::OpenClientDB ()
 void qmlConnect::refreshChatList()
 {
     client->SendRefreshChatList();
+}
+bool qmlConnect::IsForbidSign(const QString &str)
+{
+    for(int i=0;i<str.length();i++)
+    {
+        if(str[i].isPunct() && str[i]!='_')
+            return true;
+        if(str[i].isSpace())
+            return true;
+    }
+    return false;
+}
+bool qmlConnect::IsLogStatusOk(const QString & login)
+{
+    QObject* txtError=viewer->findChild<QObject*>("txtError");
+    if (login.length()<3)
+    {
+        txtError->setProperty("text","Логин слишком короткий");
+        return false;
+    }
+    if (login.length()>20)
+    {
+        txtError->setProperty("text","Логин слишком длинный!");
+        return false;
+    }
+    if(IsForbidSign(login))
+    {
+        txtError->setProperty("text","Присутствуют запрещенные символы");
+        return false;
+    }
+    return true;
 }

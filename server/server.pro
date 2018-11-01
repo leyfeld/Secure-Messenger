@@ -33,12 +33,17 @@ SOURCES += \
         main.cpp \
     database.cpp \
     myserver.cpp \
-    loginandsmsfunct.cpp
+    loginandsmsfunct.cpp \
+    sslserver.cpp
 
 HEADERS += \
     myserver.h \
     database.h \
-    loginandsmsfunct.h
+    loginandsmsfunct.h \
+    sslserver.h
 
 LIBS += -lcommon -L$$OUT_PWD/../libs/
 INCLUDEPATH += ../common
+
+RESOURCES += \
+    cert.qrc
