@@ -192,6 +192,43 @@ void MyServer::slotReadClient()
             sendToClient(QString::number(static_cast<int>(LoginAndSmsProtocol::answerSendFile)),whosend, m_clientMap.value(name));
             break;
         }
+        case LoginAndSmsProtocol::requestMessage:
+        {
+            const QString whosend = m_clientMap.key(pClientSocket);
+            m_sdb->ChatList(m_clientMap, chatList);
+            for(auto it=chatList.begin(); it!=chatList.end();++it)
+            {
+               // qDebug()<<it->m_login;
+                if(m_clientMap.contains(it->m_login) && (it->m_login!=whosend))
+                {
+                    sendToClient(QString::number(static_cast<quint8>(LoginAndSmsProtocol::requestMessage)),whosend,
+                                 m_clientMap.value(it->m_login));
+                    qDebug()<<it->m_login;
+                }
+            }
+            chatList.clear();
+            break;
+        }
+        case LoginAndSmsProtocol::answerMessage:
+        {
+            const QString whosend = m_clientMap.key(pClientSocket);
+            qRegisterMetaTypeStreamOperators<Messagelist>("Messagelist");
+            QString name, date;
+          //  QList <Messagelist> lmesList;
+            QList<QVariant> mesList;
+            QVariant vTmp;
+            in>>name>>vTmp;
+            mesList=vTmp.value <QList<QVariant>>();
+            //Messagelist tmp=mesList[0].value<Messagelist>();
+           // lmesList=mesList.value<QList <Messagelist>>();
+            if(mesList.isEmpty())
+            {
+                qDebug()<<"List id empty";
+            }
+            //qDebug()<<"name"<<name<<tmp.message<<"time"<<tmp.data<<"direction"<<tmp.direction;
+            sendToClient(QString::number(static_cast<quint8>(LoginAndSmsProtocol::answerMessage)),whosend, mesList, m_clientMap.value(name));
+            break;
+        }
         default:
         throw std::runtime_error("not implemented switch LoginAndSmsProtocol");
         }
@@ -219,7 +256,22 @@ void MyServer::sendToClient(const QString& protocol,const QString& whosend ,cons
     QByteArray  arrBlock;
     QDataStream out(&arrBlock, QIODevice::WriteOnly);
     out.setVersion(QDataStream::Qt_4_2);
+    qDebug()<<protocol;
     out << quint16(0) << QDateTime::currentDateTime() << protocol << whosend << msgData;
+
+    out.device()->seek(0);
+    out << quint16(arrBlock.size() - sizeof(quint16));
+    qDebug()<<"send arrblock from server: "<< arrBlock.size();
+    pSocket->write(arrBlock);
+}
+
+void MyServer::sendToClient(const QString& protocol,const QString& whosend, const QString& mes, const QDateTime& dateTime,
+                            const QString& dir, QAbstractSocket* pSocket)
+{
+    QByteArray  arrBlock;
+    QDataStream out(&arrBlock, QIODevice::WriteOnly);
+    out.setVersion(QDataStream::Qt_4_2);
+    out << quint16(0) << QDateTime::currentDateTime() << protocol << whosend << mes<<dateTime<<dir;
 
     out.device()->seek(0);
     out << quint16(arrBlock.size() - sizeof(quint16));

@@ -19,15 +19,18 @@ void ThreadSend::run()
     QByteArray arrBlock;
     QDataStream outStream(&arrBlock, QIODevice::WriteOnly);
     outStream.setVersion(QDataStream::Qt_4_2);
+    qDebug()<<static_cast<quint8>(m_protocolCommand);
     outStream << quint16(0) << QDateTime::currentDateTime() << static_cast<quint8>(m_protocolCommand);
     for (const QVariant& param : m_params)
     {
         if (param.type() == QVariant::String)
         {
+            qDebug()<<param.toString();
             outStream << param.toString();
         }
         else if (typeid(param) == typeid(QVariant))
         {
+            qDebug()<<param;
             outStream << param;
         }
         else

@@ -24,11 +24,13 @@ DEFINES += QT_DEPRECATED_WARNINGS
 
 SOURCES += \
         common.cpp \
-        clientlist.cpp
+        clientlist.cpp \
+    messagelist.cpp
 
 HEADERS += \
         common.h \
         clientlist.h \
         servererror.h \
-    messageprotocol.h
+    messageprotocol.h \
+    messagelist.h
 

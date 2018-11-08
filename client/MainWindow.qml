@@ -28,11 +28,12 @@ Item {
             }
             onToMessageList:
             {
-                lmMessage.append({txtMessage:mes,
+                lmMessage.append({txtMessage:mes,txtTime:time,
                                      lmMessage:20})
+                lvMessage.positionViewAtEnd()
             }
             onToPrevMessageList:{
-                lmMessage.append({txtMessage:mes,
+                lmMessage.append({txtMessage:mes,txtTime:time,
                                      lmMessage:(direction=="to")? 400 : 20})
                 lvMessage.positionViewAtEnd()
             }
@@ -55,6 +56,7 @@ Item {
     TabBar
     {
         id: bar
+        objectName: "bar"
         width: parent.width
         currentIndex: 0
         Material.background: "#FFF59D"
@@ -236,7 +238,7 @@ Item {
                    objectName: "iMessage"
                    anchors.left: parent.left
                    anchors.right: parent.right
-                   height: Math.max(txtIMessage.contentHeight * 1.5)
+                   height: Math.max((txtIMessage.contentHeight+txtITime.contentHeight) * 1.5)
                    //clip:true
                   Rectangle{
                       anchors.left: parent.left;
@@ -258,7 +260,19 @@ Item {
                         font.underline: false
                         font.bold: false
                         font.pixelSize: 16
-                        topPadding: Math.max((parent.height-contentHeight)/2)
+                        topPadding: Math.max((parent.height-contentHeight-txtITime.contentHeight)/2)
+                        leftPadding: 10
+                    }
+                    Text{
+                        id:txtITime
+                        width: txtIMessage.width
+                        anchors.top:txtIMessage.bottom
+                        wrapMode: Text.Wrap
+                        color: "#9E9E9E"
+                        text: txtTime
+                        font.underline: false
+                        font.bold: false
+                        font.pixelSize: 12
                         leftPadding: 10
                     }
                   }
@@ -380,7 +394,7 @@ Item {
                                          lmMessage:400})
                     lvMessage.positionViewAtEnd()
                     field1.text = ""
-                    filename.text = " "
+                    filename.text = ""
                 }
             }
                     }

@@ -8,7 +8,10 @@ enum class LoginAndSmsProtocol
     reqwestFileInfo = 4,
     sendFile = 5,
     sendChatList = 6,
-    answerSendFile = 7
+    answerSendFile = 7,
+    requestMessage=8,
+    answerMessage=9,
+    //getOneAnswerMessage=10
 
 };
 #endif // MESSAGEPROTOCOL_H

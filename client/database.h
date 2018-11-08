@@ -9,6 +9,7 @@
 #include <QSqlQuery>
 #include <QSqlError>
 #include "messagelist.h"
+#include "clientlist.h"
 
 class database
 {
@@ -21,7 +22,11 @@ public:
     void CreateConnection();
     void InsertSendMessage(const QString&, const QString&, const QDateTime& );
     void InsertReceiveMessage(const QString&, const QString&, const QDateTime& );
-    void GetMessage(const QString &, QVector<Messagelist> &);
+    void GetMessage(const QString &, QVector<Messagelist> & messageList);
+    void ReturnMessage(const QString &, QList <QVariant> & messageList);
+    bool IsDBEmpty(const QVector<ClientList>& chatList);
+    void CreateSoltTable(const QString& login,const QString & solt);
+    QString GetSolt (const QString& login);
      ~database();
 
 

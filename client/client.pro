@@ -30,7 +30,8 @@ SOURCES += \
     qmlconnect.cpp \
     database.cpp \
     myfile.cpp \
-    threadsend.cpp
+    threadsend.cpp \
+    securepassword.cpp
 RESOURCES += \
     qml.qrc
 
@@ -42,8 +43,8 @@ HEADERS += \
     database.h \
     chatprotocol.h \
     myfile.h\
-    messagelist.h \
-    threadsend.h
+    threadsend.h \
+    securepassword.h
 
 LIBS += -lcommon -L$$OUT_PWD/../libs/
 message($$OUT_PWD);

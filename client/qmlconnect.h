@@ -4,6 +4,7 @@
 #include "chatprotocol.h"
 #include "database.h"
 #include "messagelist.h"
+#include "securepassword.h"
 #include <QObject>
 #include <QDebug>
 #include <QDir>
@@ -23,12 +24,14 @@ private:
     QObject* fldText=nullptr;
     QObject* rctError=nullptr;
     QObject* btnTabBar=nullptr;
+    QObject* tabBar=nullptr;
     QObject* listview=nullptr;
     QString myLogin;
     QString m_attachmentPath;
     QString fileLogin;
     std::unique_ptr<ChatProtocol> client;
     std::unique_ptr <database> dbClient;
+    bool IsConnected=false;
 public: 
     qmlConnect();
     QVector <Messagelist> mesList;
@@ -42,9 +45,10 @@ public:
 signals:
     void toMessanger();
     void toChatList(const QString & log, const bool & offOn);
-    void toPrevMessageList(const QString & direction, const QString & mes);
-    void toMessageList(const QString & mes);
+    void toPrevMessageList(const QString & direction, const QString & mes, const QString & time);
+    void toMessageList(const QString & mes, const QString & time);
     void toGetFile();
+    //void toNewDevice(const QVector <Messagelist> retMesList);
 
 public slots:
    void enterForm ();
@@ -63,6 +67,8 @@ public slots:
    void cancelSendFile();
    void slotServerError(const QString& );
    void slotServerConnected();
+   void slotReturnMessage(const QString &login);
+   void slotAnswerReturnMessage(const QString& login, QList <QVariant> RetMessage);
 protected:
    QObject *viewer;
 

@@ -34,7 +34,6 @@ ChatProtocol::ChatProtocol()
     m_socket->setProtocol(QSsl::AnyProtocol);
     connect(m_socket, SIGNAL(sslErrors(const QList<QSslError>&)),
             this, SLOT(slotSslErrorOccured(const QList<QSslError>&)));
-
     connect(m_socket, SIGNAL(encrypted()), SIGNAL(SigConnected()));
     connect(m_socket, SIGNAL(readyRead()), SLOT(slotReadyRead()));
     connect(m_socket, SIGNAL(error(QAbstractSocket::SocketError)),this, SLOT(slotError(QAbstractSocket::SocketError)));
@@ -78,10 +77,21 @@ void ChatProtocol::SendRefreshChatList()
     qDebug() <<"SendRefreshChatList: ";
     Send(LoginAndSmsProtocol::sendChatList, {});
 }
+void ChatProtocol::SendMessageRequest()
+{
+    qDebug() <<"SendMessageRequest";
+    Send(LoginAndSmsProtocol::requestMessage, {});
+}
 void ChatProtocol::SendFile(const QString& login, const QVariant &data)
 {
     qDebug() <<"SendFile: ";
     Send(LoginAndSmsProtocol::sendFile, {login, data});
+}
+void ChatProtocol::ReturnMessage(const QString &loginSentTo, const QList <QVariant> RetMessList)
+{
+
+    qDebug() <<"ReturnMessage: ";
+    Send(LoginAndSmsProtocol::answerMessage, {loginSentTo, RetMessList});
 }
 void ChatProtocol::WriteAndReadFile(const QString &whosend, const QVariant &data, const QDateTime &time)
 {
@@ -109,11 +119,11 @@ void ChatProtocol::WriteAndReadFile(const QString &whosend, const QVariant &data
     }
     QString new_dir = QFileInfo(filename).fileName();
     filename = QDir::currentPath() + "/" + new_dir;
-//    qDebug() << "Current File path: " <<  filename;
+    qDebug() << "Current File path: " <<  filename;
     if(size > 0)
     {
         QFile file(filename);
-//        qDebug() << "Current File open path: " <<  filename;
+        qDebug() << "Current File open path: " <<  filename;
         if(!file.open(QIODevice::Append | QIODevice::Unbuffered))
         {
             qDebug() << "Can't write to file '" << filename;
@@ -151,7 +161,7 @@ void ChatProtocol::slotReadyRead()
                 break;
             }
             in >> m_nNextBlockSize;
-            qDebug() <<"read block: " << m_nNextBlockSize;
+            //qDebug() <<"read block: " << m_nNextBlockSize;
             qDebug() <<"read bytesAvailable: " << m_socket->bytesAvailable();
         }
 
@@ -162,6 +172,7 @@ void ChatProtocol::slotReadyRead()
         QDateTime   time;
         QString loginProtocol;
         in >> time >> loginProtocol;
+        qDebug()<<"loginProtocol"<<loginProtocol;
         if(static_cast<ServerError>(loginProtocol.toUInt()) == ServerError::LoginOffline)
         {
             QString filename;
@@ -238,12 +249,34 @@ void ChatProtocol::slotReadyRead()
                 emit SigSendFileTo(whosend);
                 break;
             }
+        case LoginAndSmsProtocol::requestMessage:
+        {
+            QString whosend;
+            in>>whosend;
+            qDebug() <<"LoginAndSmsProtocol::requestMessage:от кого запрос "<< whosend;
+            emit SigReturnMessage(whosend);
+            break;
+        }
+        case LoginAndSmsProtocol::answerMessage:
+        {
+            QString whosend;
+            qRegisterMetaTypeStreamOperators<Messagelist>("Messagelist");
+            QVariant vTmp;
+            QList <QVariant> mesList;
+            //QList <Messagelist> mesList;
+            in>>whosend>>vTmp;
+            mesList=vTmp.value<QList<QVariant>>();
+            //mesList=tmp.value<QList <Messagelist>>();
+            //qDebug() <<"LoginAndSmsProtocol::answerMessage:от кого запрос "<< whosend<<mesList[0].message<<mesList[0].data<<mesList[0].direction;
+            emit SigAnswerReturnMessage(whosend,mesList);
+            break;
+        }
         default:
             throw std::runtime_error("not implemented switch LoginAndSmsProtocol");
             break;
         }}
         m_nNextBlockSize = 0;
-        qDebug()<<"000000";
+        //qDebug()<<"000000";
     }
  }
 void ChatProtocol::slotError(QAbstractSocket::SocketError err)

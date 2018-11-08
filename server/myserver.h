@@ -3,6 +3,7 @@
 
 #include "database.h"
 #include "sslserver.h"
+#include "messagelist.h"
 #include <QWidget>
 #include <QMap>
 #include <memory>
@@ -26,6 +27,9 @@ private:
     template <typename T>
     void sendToClient(const QString& str2, const T& str, QAbstractSocket* pSocket);
     void sendToClient(const QString& protocol, const QString& whosend , const QVariant& msgData, QAbstractSocket *pSocket);
+    void sendToClient(const QString& protocol, const QString& whosend , const QString& mes, const QDateTime& dateTime,
+                      const QString& dir, QAbstractSocket *pSocket);
+    void sendToClient(const QString& str2, QAbstractSocket* pSocket);
 
 public:
     MyServer(int nPort, QWidget* pwgt = 0);

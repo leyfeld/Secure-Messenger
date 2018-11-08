@@ -4,6 +4,7 @@
 #include "clientlist.h"
 #include "myfile.h"
 #include "messageprotocol.h"
+#include "messagelist.h"
 #include <QDataStream>
 #include <QTcpSocket>
 #include <QSslSocket>
@@ -21,9 +22,11 @@ public:
     void SendRefreshChatList();
     void SendMessageToClient(const QString &name, const QString &sms);
     void SendFile(const QString &login, const QVariant &data);
+    void SendMessageRequest();
     void WriteAndReadFile(const QString &whosend, const QVariant &data, const QDateTime &time);
     void ReqwestAddFile(const QString &loginSentTo, const QString &filename);
     void AnswerOnReqwestSendFile(const QString &loginSentTo);
+    void ReturnMessage(const QString &loginSentTo, const QList <QVariant> RetMessList);
 
 signals:
     void SigGetMessage(const QString &login, const QString &message, const QDateTime &time);
@@ -39,6 +42,8 @@ signals:
     void SigAllFile(const QString &whosend, const QString &filename, const QDateTime &time);
     void SigStopSendFile(const QString &filename);
     void SigSendInfo();
+    void SigReturnMessage(const QString& login);
+    void SigAnswerReturnMessage(const QString& login, QList <QVariant> RetMessage);
 
 private slots:
     void slotReadyRead();
@@ -52,6 +57,7 @@ private:
     QSslSocket* m_socket;
     QVector<ClientList> chatList;
     QMutex m_mutex;
+    QVector <Messagelist> mesList;
 
 
 };
