@@ -30,7 +30,8 @@ SOURCES += \
     qmlconnect.cpp \
     database.cpp \
     myfile.cpp \
-    threadsend.cpp
+    threadsend.cpp \
+    cryptoworker.cpp
 RESOURCES += \
     qml.qrc
 
@@ -43,8 +44,10 @@ HEADERS += \
     chatprotocol.h \
     myfile.h\
     messagelist.h \
-    threadsend.h
-
+    threadsend.h \
+    cryptoworker.h
+LIBS += -L$$OUT_PWD/../openssl1.0.2p/lib -lssl -lcrypto
+INCLUDEPATH += ../openssl1.0.2p/include/
 LIBS += -lcommon -L$$OUT_PWD/../libs/
 message($$OUT_PWD);
 INCLUDEPATH += ../common

@@ -14,6 +14,7 @@
 #include <QSslSocket>
 #include <QThreadPool>
 #include <QMutexLocker>
+#include <QVariant>
 
 ChatProtocol::ChatProtocol()
     : m_nNextBlockSize(0)
@@ -38,7 +39,6 @@ ChatProtocol::ChatProtocol()
     connect(m_socket, SIGNAL(encrypted()), SIGNAL(SigConnected()));
     connect(m_socket, SIGNAL(readyRead()), SLOT(slotReadyRead()));
     connect(m_socket, SIGNAL(error(QAbstractSocket::SocketError)),this, SLOT(slotError(QAbstractSocket::SocketError)));
-
 }
 
 void ChatProtocol::ConnectEncrypted(const QString &strHost, int nPort)
@@ -71,7 +71,9 @@ void ChatProtocol::SendLoginToServer(const QString &login, const QString &passwo
 void ChatProtocol::SendMessageToClient(const QString &name,const QString &sms)
 {
     qDebug() <<"SendMessageToClient: ";
-    Send(LoginAndSmsProtocol::mes, {name,sms});
+    QByteArray encsms;
+    m_crypto->Encrypt(name, sms, encsms);
+    Send(LoginAndSmsProtocol::mes, {name, encsms});
 }
 void ChatProtocol::SendRefreshChatList()
 {
@@ -109,11 +111,9 @@ void ChatProtocol::WriteAndReadFile(const QString &whosend, const QVariant &data
     }
     QString new_dir = QFileInfo(filename).fileName();
     filename = QDir::currentPath() + "/" + new_dir;
-//    qDebug() << "Current File path: " <<  filename;
     if(size > 0)
     {
         QFile file(filename);
-//        qDebug() << "Current File open path: " <<  filename;
         if(!file.open(QIODevice::Append | QIODevice::Unbuffered))
         {
             qDebug() << "Can't write to file '" << filename;
@@ -137,6 +137,11 @@ void ChatProtocol::AnswerOnReqwestSendFile(const QString &loginSentTo)
 {
     qDebug() <<"AnswerOnReqwestSendFile: ";
     Send(LoginAndSmsProtocol::answerSendFile, {loginSentTo});
+}
+
+void ChatProtocol::SendPublicKey(const QByteArray &pubKey)
+{
+   Send(LoginAndSmsProtocol::sendPublicKey, {pubKey});
 }
 void ChatProtocol::slotReadyRead()
 {
@@ -176,6 +181,12 @@ void ChatProtocol::slotReadyRead()
             {
                 QString serAnswer;
                 in >> serAnswer;
+                if(static_cast<ServerError>(serAnswer.toUInt()) ==  ServerError::Success)
+                {
+                    m_crypto.reset(new CryptoWorker());
+                    pubKey = m_crypto->GetPublicKey();
+                    SendPublicKey(pubKey);
+                }
                 emit SigAnswerReg(static_cast<ServerError>(serAnswer.toUInt()));
                 break;
              }
@@ -183,6 +194,12 @@ void ChatProtocol::slotReadyRead()
             {
                 QString serAnswer;
                 in >> serAnswer;
+                if(static_cast<ServerError>(serAnswer.toUInt()) ==  ServerError::Success)
+                {
+                    m_crypto.reset(new CryptoWorker());
+                    pubKey = m_crypto->GetPublicKey();
+                    SendPublicKey(pubKey);
+                }
                 qDebug() <<"LoginAndSmsProtocol::login: ";
                 emit SigAnswerLogin(static_cast<ServerError>(serAnswer.toUInt()));
                 break;
@@ -197,20 +214,13 @@ void ChatProtocol::slotReadyRead()
             }
             case LoginAndSmsProtocol::mes:
             {
-                QString message;
-                QString log;
-                in>>message;
-                int i=0;
-                while(message[i]!=' ')
-                {
-                    i++;
-                }
-                while(message[i]!=':')
-                {
-                    log+=message[i];
-                    i++;
-                }
-                emit SigGetMessage(log, message, time);
+                QVariant message;
+                QString whosend;
+                in>>whosend>>message;
+                QByteArray mes = message.toByteArray();
+                QString decmes;
+                m_crypto->Decrypt(whosend,mes,decmes);
+                emit SigGetMessage(whosend, decmes, time);
                 break;
             }
             case LoginAndSmsProtocol::sendFile:
@@ -238,6 +248,22 @@ void ChatProtocol::slotReadyRead()
                 emit SigSendFileTo(whosend);
                 break;
             }
+            case LoginAndSmsProtocol::sendPublicKey:
+            {
+                QString whosend;
+                QVariant KeyFrom;
+                in >> whosend >> KeyFrom;
+                QByteArray pubKeyFrom = KeyFrom.toByteArray();
+                m_crypto->GeneratorKey(whosend,pubKeyFrom);
+                break;
+            }
+         case LoginAndSmsProtocol::deleteClient:
+            {
+                QString nameDelete;
+                in >> nameDelete;
+                m_crypto->DeleteNameFromMap(nameDelete);
+                break;
+            }
         default:
             throw std::runtime_error("not implemented switch LoginAndSmsProtocol");
             break;
@@ -256,7 +282,7 @@ void ChatProtocol::slotError(QAbstractSocket::SocketError err)
                      err == QAbstractSocket::ConnectionRefusedError ?
                      "The connection was refused." :
                      QString(m_socket->errorString()) );
-    emit SigErrorHappened(strError);
+    //emit SigErrorHappened(strError);
 }
 
 void ChatProtocol::slotSendFile(const QString &login, const QVariant &data)

@@ -9,12 +9,10 @@
 
 qmlConnect::qmlConnect() : client(new ChatProtocol())
 {
-//    CreateConnection();
+
 }
 void qmlConnect::CreateConnection(const QString& ip)
 {
-        //client.reset(new ChatProtocol (ip, 2323));
-
         connect(client.get(), SIGNAL(SigGetMessage(const QString &, const QString &, const QDateTime)),this,
                 SLOT(slotReadMessage(const QString &, const QString &, const QDateTime& )));
         connect(client.get(), SIGNAL(SigAllFile(const QString &, const QString &, const QDateTime)),this,
@@ -57,21 +55,6 @@ void qmlConnect::slotServerConnected()
         client->SendLoginToServer(log,password);
     }
 }
-//void qmlConnect::enterForm()
-//{
-//    //console.log("We are in Enter");
-//    qDebug()<<"We are in Enter";
-//    fldLogin=viewer->findChild<QObject*>("logField");
-//    fldPassword=viewer->findChild<QObject*>("pswField");
-
-//    QString log, password;
-
-//    log=(fldLogin->property("text")).toString();
-//    password=(fldPassword->property("text")).toString();
-//    qDebug()<<log<<" "<<password;
-//    myLogin=log;
-//    client->SendLoginToServer(log,password);
-//}
 void qmlConnect::enterForm()
 {
     //console.log("We are in Enter");
@@ -90,19 +73,19 @@ void qmlConnect::enterForm()
 
 void qmlConnect::registrationForm()
 {
-//    //console.log("We are in Enter");
-//    qDebug()<<"We are in Registration";
+    //console.log("We are in Enter");
+    qDebug()<<"We are in Registration";
 
-//    fldIP=viewer->findChild<QObject*>("ipRegField");
-//    fldName=viewer->findChild<QObject*>("nameRegField");
-//    fldLogin=viewer->findChild<QObject*>("logRegField");
-//    fldPassword=viewer->findChild<QObject*>("pswRegField");
+    fldIP=viewer->findChild<QObject*>("ipRegField");
+    fldName=viewer->findChild<QObject*>("nameRegField");
+    fldLogin=viewer->findChild<QObject*>("logRegField");
+    fldPassword=viewer->findChild<QObject*>("pswRegField");
 
-//    QString ip;
+    QString ip;
 
-//    ip=(fldIP->property("text")).toString();
-//    CreateConnection(ip);
-//    qDebug()<<ip;
+    ip=(fldIP->property("text")).toString();
+    CreateConnection(ip);
+    qDebug()<<ip;
 
 
 }
@@ -134,6 +117,9 @@ void qmlConnect::chooseFile(const QUrl& url)
     QObject* filename = viewer->findChild<QObject*>("filename");
     filename->setProperty("text", url.fileName());
     m_attachmentPath = url.path();
+#ifdef _WIN32
+    m_attachmentPath.remove(0,1);
+#endif
 }
 void qmlConnect::slotServerError(const QString& errorCode)
 {
@@ -215,7 +201,7 @@ void qmlConnect::okSendFile()
 
 void qmlConnect::cancelSendFile()
 {
-    client->AnswerOnReqwestSendFile(fileLogin);
+    //client->AnswerOnReqwestSendFile(fileLogin);
 }
 void qmlConnect::slotReadMessage(const QString& log, const QString& mes, const QDateTime & time)
 {

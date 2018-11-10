@@ -26,6 +26,10 @@ void ThreadSend::run()
         {
             outStream << param.toString();
         }
+        else if(param.type() == QVariant::ByteArray)
+        {
+            outStream << param.toByteArray();
+        }
         else if (typeid(param) == typeid(QVariant))
         {
             outStream << param;

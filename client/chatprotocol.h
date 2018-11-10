@@ -4,9 +4,11 @@
 #include "clientlist.h"
 #include "myfile.h"
 #include "messageprotocol.h"
+#include "cryptoworker.h"
 #include <QDataStream>
 #include <QTcpSocket>
 #include <QSslSocket>
+#include <memory>
 
 
 class ChatProtocol: public QObject
@@ -23,6 +25,7 @@ public:
     void WriteAndReadFile(const QString &whosend, const QVariant &data, const QDateTime &time);
     void ReqwestAddFile(const QString &loginSentTo, const QString &filename);
     void AnswerOnReqwestSendFile(const QString &loginSentTo);
+    void SendPublicKey(const QByteArray& pubKey);
 
 signals:
     void SigGetMessage(const QString &login, const QString &message, const QDateTime &time);
@@ -51,6 +54,8 @@ private:
     QSslSocket* m_socket;
     QVector<ClientList> chatList;
     QMutex m_mutex;
+    std::unique_ptr<CryptoWorker> m_crypto;
+    QByteArray pubKey;
 
 
 };

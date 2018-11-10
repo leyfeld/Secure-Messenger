@@ -1,3 +1,4 @@
+
 import QtQuick 2.2
 import QtQuick 2.9
 import QtQuick.Window 2.2
@@ -34,6 +35,7 @@ Item {
             onToPrevMessageList:{
                 lmMessage.append({txtMessage:mes,
                                      lmMessage:(direction=="to")? 400 : 20})
+                lvMessage.positionViewAtEnd()
             }
             onToGetFile :
             {
@@ -49,6 +51,7 @@ Item {
             color: "#EEEEEE"
         }
     }
+
 
     TabBar
     {
@@ -100,6 +103,7 @@ Item {
                 }
 
          }
+
          Dialog{
             id: fDialog
             title: "Would you like add new file?"
@@ -195,7 +199,7 @@ Item {
                          clientListView.currentIndex=index
                      }
 
-            
+
              }
 
            }
@@ -215,7 +219,7 @@ Item {
              id: svMessage
              anchors.top: parent.top
              width: 640
-             height: 250
+             height: 350
              ListView
              {
                  id:lvMessage
@@ -264,21 +268,54 @@ Item {
            }
            }
 
-                   TextField {
-                               id: field1
-                               objectName: "field1"
-                               anchors.left: parent.left
-                               anchors.bottom: parent.bottom
-                               Material.accent: "#B0BEC5"
-                               anchors.bottomMargin: 10
-                               anchors.leftMargin: 30
-                               placeholderText: "Введите текст"
-
-
-                anchors.right: parent.right
-                anchors.rightMargin: 141
+           ScrollView {
+               id: svText
+               anchors.left: parent.left
+               anchors.bottom: parent.bottom
+               anchors.bottomMargin: 8
+               rightPadding: 15
+               anchors.leftMargin: 30
+               width:440
+               height:50
+               TextArea
+              {
+                id: field1
+                clip: true
+                height: 50
+                objectName: "field1"
+                Material.accent: "#414037"
+                wrapMode: Text.Wrap
+                placeholderText: "Введите текст"
             }
-
+           }
+                Image {
+                    id: attachBtnImage
+                    anchors.left: svText.right
+                    anchors.leftMargin: 10
+                    anchors.right: button.left
+                    anchors.rightMargin: 10
+                    anchors.bottom: parent.bottom
+                    anchors.bottomMargin: 10
+                    height:44
+                    source: "pics/duck.png"
+                    MouseArea{
+                        id: maAttach
+                        anchors.fill: parent
+                        hoverEnabled: true
+                        onClicked:
+                        {
+                            fileDialog.open()
+                        }
+                        onEntered:
+                        {
+                            attachBtnImage.source= "pics/duck_1.png"
+                        }
+                        onExited:
+                        {
+                            attachBtnImage.source= "pics/duck.png"
+                        }
+                    }
+                  }
             Text {
                 id: filename
                 x: 61
@@ -291,51 +328,20 @@ Item {
 
             CheckBox {
                 id: checkBox
-                y: 342
+                Material.accent: "#414037"
                 height: 42
-                text: qsTr("Check Box")
-                anchors.right: parent.right
-                anchors.rightMargin: 577
-                anchors.bottom: parent.bottom
-                anchors.bottomMargin: 49
-                anchors.left: parent.left
-                anchors.leftMargin: 20
+                anchors.bottom: svText.top
+                anchors.left: svText.left
                 visible:false;
                 onClicked: {
                     qmlConnection.cancelFile()
                     checkBox.visible=false
                     filename.visible=false
                     svMessage.height=350
-//                    filename.text = " ";
-//                    checkBox.checked = false
-//                    qmlConnection.cancelFile()
                 }
             }
 
-            Button {
-                id: attachBtn
-                y: 385
-                height: 40
-                anchors.left: parent.left
-                anchors.leftMargin: 498
-                anchors.right: parent.right
-                anchors.rightMargin: 101
-                anchors.bottom: parent.bottom
-                anchors.bottomMargin: 8
-                Material.background: "#FFFFFF"
-                Image {
-                    id: attachBtnImage
-                    width: parent.width*0.7
-                    height: parent.height*0.5
-                    anchors.horizontalCenter: parent.horizontalCenter
-                    anchors.verticalCenter: parent.verticalCenter
-                    source: "pics/duck.png"
-                }
-                onClicked:
-                {
-                    fileDialog.open()
-                }
-            }
+
 
             FileDialog
             {
@@ -351,10 +357,11 @@ Item {
                     qmlConnection.chooseFile(this.fileUrl)
                 }
             }
+
             Button {
                 id: button
                 y: 385
-                height: 40
+                height: 50
                 objectName: "button"
                 text: qsTr("Send")
                 anchors.left: parent.left
@@ -369,18 +376,34 @@ Item {
                     qmlConnection.messageForm()
                     lmMessage.append({txtMessage:field1.text,
                                          lmMessage:400})
+                    lvMessage.positionViewAtEnd()
                     field1.text = ""
                     filename.text = " "
                 }
             }
                     }
                 }
-            }
 
-
-
-
-/*##^## Designer {
-    D{i:46;anchors_width:60;anchors_x:0}
-}
- ##^##*/
+    Rectangle{
+        id: rctError
+        objectName: "rctError"
+        width:messageWindow.width
+        height:50
+        color:"#FFF59D"
+        anchors.top:bar.bottom
+        visible:false
+        opacity: 0.5
+        Text {
+            id: txtError
+            objectName: "txtError"
+            color: "#F44336"
+            text:qsTr(" ")
+            font.underline: false
+            font.bold: false
+            font.pixelSize: 16
+            anchors.horizontalCenter: parent.horizontalCenter
+            anchors.verticalCenter: parent.verticalCenter
+            //topPadding: 50
+        }
+    }
+ }

@@ -52,6 +52,7 @@ MyServer::MyServer(int nPort, QWidget* pwgt /*=0*/) : QWidget(pwgt), m_nNextBloc
     connect(pClientSocket, SIGNAL(disconnected()), this, SLOT(slotDeleteMap()));
     connect(pClientSocket, SIGNAL(disconnected()), pClientSocket, SLOT(deleteLater()));
     connect(pClientSocket, SIGNAL(readyRead()), this, SLOT(slotReadClient()));
+    connect(pClientSocket, SIGNAL(SigNameDelete(cosnt QString&)), this, SLOT(slotSendSig(const QString&)));
 
 
     qDebug()<<"slotnewconnection!";
@@ -61,11 +62,21 @@ void MyServer::slotDeleteMap()
    QSslSocket* pClientSocket = (QSslSocket*)sender();
    QString nameClient = m_clientMap.key(pClientSocket);
    m_clientMap.remove(nameClient);
+   m_clientKey.remove(nameClient);
+   emit SigNameDelete(nameClient);
 }
 
 void MyServer::slotEncryptedReady()
 {
     qDebug()<<"slotEncryptedReady!";
+}
+
+void MyServer::slotSendSig(const QString &name)
+{
+    foreach (QAbstractSocket* nameFor, m_clientMap)
+    {
+        sendToClient(QString::number(static_cast<quint8>(LoginAndSmsProtocol::deleteClient)),name, nameFor);
+    }
 }
 
 void MyServer::slotReadClient()
@@ -126,8 +137,9 @@ void MyServer::slotReadClient()
         case LoginAndSmsProtocol::mes:
         {
             QString login;
-            QString str;
+            QByteArray str;
             in >>login >> str;
+            QVariant mes(str);
             QString strMessage = time.toString() + " " + "Client has sended - " + str;
             m_ptxt->append(strMessage);
             if(!m_clientMap.contains(login))
@@ -136,7 +148,7 @@ void MyServer::slotReadClient()
                 break;
             }
             const QString whosend = m_clientMap.key(pClientSocket);
-            sendToClient(QString::number(static_cast<quint8>(LoginAndSmsProtocol::mes)),"From " + whosend + ":" +str, m_clientMap.value(login));
+            sendToClient(QString::number(static_cast<quint8>(LoginAndSmsProtocol::mes)), whosend , mes, m_clientMap.value(login));
             break;
         }
         case LoginAndSmsProtocol::sendChatList:
@@ -190,6 +202,25 @@ void MyServer::slotReadClient()
             }
             const QString whosend = m_clientMap.key(pClientSocket);
             sendToClient(QString::number(static_cast<int>(LoginAndSmsProtocol::answerSendFile)),whosend, m_clientMap.value(name));
+            break;
+        }
+        case LoginAndSmsProtocol::sendPublicKey:
+        {
+            QByteArray pbKey;
+            in >> pbKey;
+            const QString whosend = m_clientMap.key(pClientSocket);
+            m_clientKey.insert(whosend, pbKey);
+            foreach (QAbstractSocket* name, m_clientMap)
+            {
+                QVariant key(pbKey);
+                sendToClient(QString::number(static_cast<int>(LoginAndSmsProtocol::sendPublicKey)), whosend,key,name);
+            }
+            foreach (QByteArray pubKey, m_clientKey)
+            {
+                QVariant key(pubKey);
+                QString name = m_clientKey.key(pubKey);
+                sendToClient(QString::number(static_cast<int>(LoginAndSmsProtocol::sendPublicKey)),name, key, pClientSocket);
+            }
             break;
         }
         default:

@@ -8,7 +8,9 @@ enum class LoginAndSmsProtocol
     reqwestFileInfo = 4,
     sendFile = 5,
     sendChatList = 6,
-    answerSendFile = 7
+    answerSendFile = 7,
+    sendPublicKey = 8,
+    deleteClient = 9
 
 };
 #endif // MESSAGEPROTOCOL_H
