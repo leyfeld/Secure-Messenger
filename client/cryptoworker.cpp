@@ -7,10 +7,8 @@ void handleErrors(void)
     abort();
 }
 
-CryptoWorker::CryptoWorker():m_iv((unsigned char *)"0000000000000000")
+CryptoWorker::CryptoWorker(): m_iv(16, '\0'), m_dh(DH_get_2048_256(), DH_free)
 {
-    srand(time(NULL));
-    m_dh.reset(DH_get_2048_256());
     DH_generate_key(m_dh.get());
 }
 
@@ -19,60 +17,62 @@ int CryptoWorker::Encrypt(const QString &forLogin, const QString& string, QByteA
     int size =string.size()+127;
     encstring.resize(size);
     unsigned char* plaintext = (unsigned char*)string.toStdString().c_str();
-    EVP_CIPHER_CTX *ctx = nullptr;
+    std::unique_ptr<EVP_CIPHER_CTX, void(*)(EVP_CIPHER_CTX *)> ctx(EVP_CIPHER_CTX_new(), EVP_CIPHER_CTX_free);
     int len=0;
     int ciphertext_len=0;
-    if(!(ctx = EVP_CIPHER_CTX_new()))
+    if(ctx.get() == nullptr )
     {
         handleErrors();
     }
-    if(1 != EVP_EncryptInit_ex(ctx, EVP_aes_256_cbc(), NULL, m_secretkey.value(forLogin), m_iv))
+    unsigned char* iv = reinterpret_cast<unsigned char*>(m_iv.data());
+    const unsigned char* key = reinterpret_cast <const unsigned char*> (m_secretkey.value(forLogin).data());
+    if(1 != EVP_EncryptInit_ex(ctx.get(), EVP_aes_256_cbc(), NULL,key,iv))
     {
         handleErrors();
     }
     unsigned char* ciphertext = reinterpret_cast<unsigned char*>(encstring.data());
-    if(1 != EVP_EncryptUpdate(ctx, ciphertext, &len, plaintext, string.size()))
+    if(1 != EVP_EncryptUpdate(ctx.get(), ciphertext, &len, plaintext, string.size()))
     {
         handleErrors();
     }
     ciphertext_len = len;
-    if(1 != EVP_EncryptFinal_ex(ctx, ciphertext + len, &len))
+    if(1 != EVP_EncryptFinal_ex(ctx.get(), ciphertext + len, &len))
     {
         handleErrors();
     }
     ciphertext_len += len;
-    EVP_CIPHER_CTX_free(ctx);
     encstring.resize(ciphertext_len);
     return ciphertext_len;
 }
 
 int CryptoWorker::Decrypt(const QString& login, const QByteArray &encstring, QString &decrtext)
 {
-    EVP_CIPHER_CTX *ctx;
+    std::unique_ptr<EVP_CIPHER_CTX, void(*)(EVP_CIPHER_CTX *)> ctx(EVP_CIPHER_CTX_new(), EVP_CIPHER_CTX_free);
     int len;
     int plaintext_len;
-    if(!(ctx = EVP_CIPHER_CTX_new()))
+    if(ctx.get() == nullptr )
     {
         handleErrors();
     }
-    if(1 != EVP_DecryptInit_ex(ctx, EVP_aes_256_cbc(), NULL, m_secretkey.value(login), m_iv))
+    unsigned char* iv = reinterpret_cast<unsigned char*>(m_iv.data());
+    const unsigned char* key = reinterpret_cast <const unsigned char*> (m_secretkey.value(login).data());
+    if(1 != EVP_DecryptInit_ex(ctx.get(), EVP_aes_256_cbc(), NULL, key, iv))
     {
         handleErrors();
     }
     QByteArray tempArray(encstring.size()+127,'\0');
     unsigned char* plaintext = reinterpret_cast <unsigned char*>(tempArray.data());
     const unsigned char* ciphertext = reinterpret_cast <const unsigned char* > (encstring.data());
-    if(1 != EVP_DecryptUpdate(ctx, plaintext, &len, ciphertext, encstring.size()))
+    if(1 != EVP_DecryptUpdate(ctx.get(), plaintext, &len, ciphertext, encstring.size()))
     {
         handleErrors();
     }
     plaintext_len = len;
-    if(1 != EVP_DecryptFinal_ex(ctx, plaintext + len, &len))
+    if(1 != EVP_DecryptFinal_ex(ctx.get(), plaintext + len, &len))
     {
         handleErrors();
     }
     plaintext_len += len;
-    EVP_CIPHER_CTX_free(ctx);
     tempArray.resize(plaintext_len);
     decrtext = tempArray;
     return plaintext_len;
@@ -80,12 +80,13 @@ int CryptoWorker::Decrypt(const QString& login, const QByteArray &encstring, QSt
 
 void CryptoWorker::GeneratorKey(const QString& login, QByteArray& pubkey )
 {
-    unsigned char* skey = new unsigned char[DH_size(m_dh.get())];
-    memset(skey, 0, DH_size(m_dh.get()));
+    QByteArray securekey (DH_size(m_dh.get()), '\0');
     unsigned char* pkey = reinterpret_cast<unsigned char*> (pubkey.data());
     BIGNUM* pubkeyfrom = BN_bin2bn(pkey,  pubkey.size(), NULL);
+    unsigned char* skey = reinterpret_cast<unsigned char*> (securekey.data());
     DH_compute_key(skey, pubkeyfrom, m_dh.get());
-    m_secretkey.insert(login, skey);
+    BN_clear_free(pubkeyfrom);
+    m_secretkey.insert(login, securekey);
 }
 
 QByteArray CryptoWorker::GetPublicKey()
@@ -102,4 +103,11 @@ void CryptoWorker::DeleteNameFromMap(const QString &name)
 {
     m_secretkey.remove(name);
 }
+
+QByteArray CryptoWorker::GetKey(const QString &login)
+{
+    QByteArray skey = m_secretkey.value(login);
+    return skey;
+}
+
 

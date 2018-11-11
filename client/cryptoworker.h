@@ -4,7 +4,6 @@
 #include <QDebug>
 #include <QString>
 #include <QByteArray>
-
 #include <openssl/dh.h>
 #include <openssl/engine.h>
 #include <openssl/conf.h>
@@ -20,10 +19,11 @@ public:
     void GeneratorKey(const QString &login, QByteArray &pubkey);
     QByteArray GetPublicKey();
     void DeleteNameFromMap(const QString& name);
+    QByteArray GetKey(const QString& login);
 private:
-    unsigned char *m_iv;
-    std::unique_ptr <DH> m_dh;
-    QMap <QString, unsigned char* > m_secretkey;
+    QByteArray m_iv;
+    std::unique_ptr<DH, void(*)(DH*)> m_dh;
+    QMap <QString, QByteArray > m_secretkey;
 };
 
 #endif // CRYPTOWORKER_H
