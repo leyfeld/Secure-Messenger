@@ -5,6 +5,7 @@
 #include "myfile.h"
 #include "messageprotocol.h"
 #include "cryptoworker.h"
+#include "messagelist.h"
 #include <QDataStream>
 #include <QTcpSocket>
 #include <QSslSocket>
@@ -22,10 +23,13 @@ public:
     void SendRefreshChatList();
     void SendMessageToClient(const QString &name, const QString &sms);
     void SendFile(const QString &login, const QVariant &data);
+    void SendMessageRequest();
     void WriteAndReadFile(const QString &whosend, const QVariant &data, const QDateTime &time);
     void ReqwestAddFile(const QString &loginSentTo, const QString &filename);
     void AnswerOnReqwestSendFile(const QString &loginSentTo);
     void SendPublicKey(const QByteArray& pubKey);
+    void ReturnMessage(const QString &loginSentTo, const QList <QVariant> RetMessList);
+    const QString GetSKey(const QString & login);
 
 signals:
     void SigGetMessage(const QString &login, const QString &message, const QDateTime &time);
@@ -41,6 +45,8 @@ signals:
     void SigAllFile(const QString &whosend, const QString &filename, const QDateTime &time);
     void SigStopSendFile(const QString &filename);
     void SigSendInfo();
+    void SigReturnMessage(const QString& login);
+    void SigAnswerReturnMessage(const QString& login, QList <QVariant> RetMessage);
 
 private slots:
     void slotReadyRead();
@@ -56,7 +62,7 @@ private:
     QMutex m_mutex;
     std::unique_ptr<CryptoWorker> m_crypto;
     QByteArray pubKey;
-
+    QVector <Messagelist> mesList;
 
 };
 

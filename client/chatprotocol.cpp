@@ -80,10 +80,30 @@ void ChatProtocol::SendRefreshChatList()
     qDebug() <<"SendRefreshChatList: ";
     Send(LoginAndSmsProtocol::sendChatList, {});
 }
+void ChatProtocol::SendMessageRequest()
+{
+    qDebug() <<"SendMessageRequest";
+    Send(LoginAndSmsProtocol::requestMessage, {});
+}
 void ChatProtocol::SendFile(const QString& login, const QVariant &data)
 {
     qDebug() <<"SendFile: ";
     Send(LoginAndSmsProtocol::sendFile, {login, data});
+}
+void ChatProtocol::ReturnMessage(const QString &loginSentTo, const QList <QVariant> RetMessList)
+{
+
+    qDebug() <<"ReturnMessage: ";
+    Send(LoginAndSmsProtocol::answerMessage, {loginSentTo, RetMessList});
+}
+
+const QString ChatProtocol::GetSKey(const QString &login)
+{
+    QByteArray key =  m_crypto->GetKey(login);
+    key.resize(32);
+    QString skey = key.toHex();
+    return skey;
+
 }
 void ChatProtocol::WriteAndReadFile(const QString &whosend, const QVariant &data, const QDateTime &time)
 {
@@ -248,6 +268,28 @@ void ChatProtocol::slotReadyRead()
                 emit SigSendFileTo(whosend);
                 break;
             }
+        case LoginAndSmsProtocol::requestMessage:
+        {
+            QString whosend;
+            in>>whosend;
+            qDebug() <<"LoginAndSmsProtocol::requestMessage:от кого запрос "<< whosend;
+            emit SigReturnMessage(whosend);
+            break;
+        }
+        case LoginAndSmsProtocol::answerMessage:
+        {
+            QString whosend;
+            qRegisterMetaTypeStreamOperators<Messagelist>("Messagelist");
+            QVariant vTmp;
+            QList <QVariant> mesList;
+            //QList <Messagelist> mesList;
+            in>>whosend>>vTmp;
+            mesList=vTmp.value<QList<QVariant>>();
+            //mesList=tmp.value<QList <Messagelist>>();
+            //qDebug() <<"LoginAndSmsProtocol::answerMessage:от кого запрос "<< whosend<<mesList[0].message<<mesList[0].data<<mesList[0].direction;
+            emit SigAnswerReturnMessage(whosend,mesList);
+            break;
+        }
             case LoginAndSmsProtocol::sendPublicKey:
             {
                 QString whosend;
@@ -269,7 +311,7 @@ void ChatProtocol::slotReadyRead()
             break;
         }}
         m_nNextBlockSize = 0;
-        qDebug()<<"000000";
+        //qDebug()<<"000000";
     }
  }
 void ChatProtocol::slotError(QAbstractSocket::SocketError err)
@@ -282,7 +324,7 @@ void ChatProtocol::slotError(QAbstractSocket::SocketError err)
                      err == QAbstractSocket::ConnectionRefusedError ?
                      "The connection was refused." :
                      QString(m_socket->errorString()) );
-    //emit SigErrorHappened(strError);
+    emit SigErrorHappened(strError);
 }
 
 void ChatProtocol::slotSendFile(const QString &login, const QVariant &data)

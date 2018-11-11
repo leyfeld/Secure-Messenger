@@ -26,6 +26,9 @@ void qmlConnect::CreateConnection(const QString& ip)
         connect(client.get(), SIGNAL (SigErrorHappened(const QString& )),
                 this, SLOT(slotServerError(const QString& )));
         connect(client.get(),SIGNAL(SigConnected()),this,SLOT(slotServerConnected()));
+        connect(client.get(), SIGNAL (SigReturnMessage(const QString &)),this, SLOT(slotReturnMessage(const QString &)));
+        connect(client.get(), SIGNAL (SigAnswerReturnMessage(const QString&, QList <QVariant> )),
+                this, SLOT (slotAnswerReturnMessage(const QString& , QList <QVariant>)));
 
         client->ConnectEncrypted(ip, 2323);
 }
@@ -37,24 +40,28 @@ void qmlConnect::slotServerConnected()
 {
     if(fldName)
     {
-        QString vName, log, password;
-        vName=(fldName->property("text")).toString();
-        log=(fldLogin->property("text")).toString();
+
+        QString vName, password;
+        vName=(fldName->property("text")).toString(); 
         password=(fldPassword->property("text")).toString();
-        qDebug()<<vName<<" "<<log<<" "<<password;
-        myLogin=log;
-        client->SendRegistrationToServer(log,vName,password);
+        SecurePassword sPsw(password);
+        dbClient->CreateSoltTable(myLogin, sPsw.GetRandomString());
+        QByteArray psw =sPsw.GetHash();
+        qDebug()<<vName<<psw;
+        client->SendRegistrationToServer(myLogin,vName,psw);
     }
     if(!fldName)
     {
-        QString log, password;
-        log=(fldLogin->property("text")).toString();
+        QString password;
         password=(fldPassword->property("text")).toString();
-        qDebug()<<log<<password;
-        myLogin=log;
-        client->SendLoginToServer(log,password);
+        SecurePassword sPsw(password);
+        sPsw.SetSolt(dbClient->GetSolt(myLogin));
+        QByteArray psw =sPsw.GetHash();
+        qDebug()<<myLogin<<psw;
+        client->SendLoginToServer(myLogin,psw);
     }
 }
+
 void qmlConnect::enterForm()
 {
     //console.log("We are in Enter");
@@ -63,12 +70,24 @@ void qmlConnect::enterForm()
     fldLogin=viewer->findChild<QObject*>("logField");
     fldPassword=viewer->findChild<QObject*>("pswField");
 
-    QString ip;
+    QString ip, log;
 
     ip=(fldIP->property("text")).toString();
+    log=(fldLogin->property("text")).toString();
+
+    myLogin=log;
 
     qDebug()<<ip;
-    CreateConnection(ip);
+    if( !IsConnected)
+    {
+        IsConnected=true;
+        OpenClientDB();
+        CreateConnection(ip);
+
+    }
+    if(IsConnected)
+        slotServerConnected();
+
 }
 
 void qmlConnect::registrationForm()
@@ -81,11 +100,21 @@ void qmlConnect::registrationForm()
     fldLogin=viewer->findChild<QObject*>("logRegField");
     fldPassword=viewer->findChild<QObject*>("pswRegField");
 
-    QString ip;
-
+    QString ip, log;
+    log=(fldLogin->property("text")).toString();
     ip=(fldIP->property("text")).toString();
-    CreateConnection(ip);
-    qDebug()<<ip;
+    myLogin=log;
+
+    if(IsLogStatusOk(log) && !IsConnected)
+    {
+        IsConnected=true;
+        OpenClientDB();
+        CreateConnection(ip);
+
+    }
+    if(IsConnected)
+        slotServerConnected();
+    qDebug()<<ip<<myLogin<<log;
 
 
 }
@@ -114,40 +143,57 @@ void qmlConnect::messageForm()
 }
 void qmlConnect::chooseFile(const QUrl& url)
 {
+    qDebug()<<url;
     QObject* filename = viewer->findChild<QObject*>("filename");
     filename->setProperty("text", url.fileName());
     m_attachmentPath = url.path();
 #ifdef _WIN32
     m_attachmentPath.remove(0,1);
 #endif
+    qDebug()<<m_attachmentPath;
 }
 void qmlConnect::slotServerError(const QString& errorCode)
 {
-    txtError=viewer->findChild<QObject*>("txtError");
+    if(rctError)
+        rctError->setProperty("visible", true);
+
+    QObject* txtError=viewer->findChild<QObject*>("txtError");
     txtError->setProperty("text",errorCode);
 }
 void qmlConnect::cancelFile()
 {
     m_attachmentPath.clear();
 }
+
+void qmlConnect::getKey()
+{
+    btnTabBar=viewer->findChild<QObject*>("btnMessageList");
+    QString log;
+    log=(btnTabBar->property("text")).toString();
+    qDebug()<< "get key: "<< log;
+    QString skey = client->GetSKey(log);
+    QObject* key = viewer->findChild<QObject*>("key");
+    key->setProperty("text", skey);
+}
 void qmlConnect::messageList(const QString & log)
 {
     dbClient->GetMessage(log, mesList);
     qDebug()<<mesList.size();
+    QString dTime;
     for(int i=0;i<mesList.size();i++)
     {
-        emit toPrevMessageList(mesList[i].direction,mesList[i].message);
+        dTime=mesList[i].data.toString("hh:mm ap\nddd MMMM d yy");
+        emit toPrevMessageList(mesList[i].direction,mesList[i].message,dTime);
     }
 
 }
 void qmlConnect::slotRegistrationError(ServerError errorCode)
 {
-    txtError=viewer->findChild<QObject*>("txtError");
+    QObject* txtError=viewer->findChild<QObject*>("txtError");
     switch(errorCode)
     {
         case ServerError::Success:
         {
-            OpenClientDB();
             emit toMessanger();
             break;
         }
@@ -164,15 +210,25 @@ void qmlConnect::slotRegistrationError(ServerError errorCode)
 }
 void qmlConnect::chatListChange(const QVector <ClientList>& chatList)
 {
+    rctError=viewer->findChild<QObject*>("rctError");
     qDebug()<<"Here we are!"<<chatList.size();
+    if (dbClient->IsDBEmpty(chatList))
+    {
+        qDebug()<<"Empty DB!";
+        client->SendMessageRequest();
+    }
     for(int i=0;i<chatList.size();i++)
     {
         emit toChatList(chatList[i].m_login, chatList[i].m_online);
     }
-//    listview=viewer->findChild<QObject*>("listClient");
-    //    listview->setProperty("text", " ");
 }
-
+void qmlConnect::slotReturnMessage(const QString &login)
+{
+    QList <QVariant> retMesList;
+    dbClient->ReturnMessage(login, retMesList);
+    //qDebug()<<retMesList[1].direction;
+    client->ReturnMessage(login, retMesList);
+}
 void qmlConnect::slotGetFile(const QString & login)
 {
     fileLogin.clear();
@@ -185,6 +241,7 @@ void qmlConnect::transportFile(const QString& login)
     QThread *workerThread= new QThread();
     FileSender* m_file = new FileSender(login, m_attachmentPath);
     m_file->moveToThread(workerThread);
+    qDebug()<<"In transport File";
     connect(workerThread, SIGNAL(started()), m_file, SLOT(slotTransferFile()));
     connect(client.get(), SIGNAL(SigStopSendFile(const QString &)), m_file, SLOT(slotStopTransferFile(const QString &)));
     connect(workerThread, SIGNAL(finished()), workerThread, SLOT(deleteLater()));
@@ -201,13 +258,28 @@ void qmlConnect::okSendFile()
 
 void qmlConnect::cancelSendFile()
 {
-    //client->AnswerOnReqwestSendFile(fileLogin);
+    client->AnswerOnReqwestSendFile(fileLogin);
 }
 void qmlConnect::slotReadMessage(const QString& log, const QString& mes, const QDateTime & time)
 {
+    tabBar=viewer->findChild<QObject*>("bar");
+    bool tabBtn=(tabBar->property("currentIndex")).toBool();
     qDebug()<<log<<mes<<time;
     dbClient->InsertReceiveMessage(log, mes, time);
-    emit toMessageList(mes);
+    if(tabBtn)
+        emit toMessageList(mes, time.toString("hh:mm ap\nddd MMMM d yy"));
+}
+void qmlConnect::slotAnswerReturnMessage(const QString& login, QList <QVariant> RetMessage)
+{
+    Messagelist tmp;
+    for(int i=0;i<RetMessage.length();++i)
+    {
+        tmp=RetMessage[i].value<Messagelist>();
+        if(tmp.direction=="to")
+            dbClient->InsertReceiveMessage(login,tmp.message,tmp.data);
+        if(tmp.direction=="from")
+            dbClient->InsertSendMessage(login,tmp.message,tmp.data);
+    }
 }
 void qmlConnect::OpenClientDB ()
 {
@@ -220,4 +292,35 @@ void qmlConnect::OpenClientDB ()
 void qmlConnect::refreshChatList()
 {
     client->SendRefreshChatList();
+}
+bool qmlConnect::IsForbidSign(const QString &str)
+{
+    for(int i=0;i<str.length();i++)
+    {
+        if(str[i].isPunct() && str[i]!='_')
+            return true;
+        if(str[i].isSpace())
+            return true;
+    }
+    return false;
+}
+bool qmlConnect::IsLogStatusOk(const QString & login)
+{
+    QObject* txtError=viewer->findChild<QObject*>("txtError");
+    if (login.length()<3)
+    {
+        txtError->setProperty("text","Логин слишком короткий");
+        return false;
+    }
+    if (login.length()>20)
+    {
+        txtError->setProperty("text","Логин слишком длинный!");
+        return false;
+    }
+    if(IsForbidSign(login))
+    {
+        txtError->setProperty("text","Присутствуют запрещенные символы");
+        return false;
+    }
+    return true;
 }

@@ -11,7 +11,7 @@ struct ClientList
     bool m_online;
 };
 
-Q_DECLARE_METATYPE(ClientList);
+//Q_DECLARE_METATYPE(ClientList);
 
 QDataStream &operator << (QDataStream& out,const ClientList& list);
 QDataStream &operator >> (QDataStream& in, ClientList& list);

@@ -31,7 +31,8 @@ SOURCES += \
     database.cpp \
     myfile.cpp \
     threadsend.cpp \
-    cryptoworker.cpp
+    cryptoworker.cpp\
+    securepassword.cpp
 RESOURCES += \
     qml.qrc
 
@@ -43,9 +44,9 @@ HEADERS += \
     database.h \
     chatprotocol.h \
     myfile.h\
-    messagelist.h \
     threadsend.h \
-    cryptoworker.h
+    cryptoworker.h\
+    securepassword.h
 LIBS += -L$$OUT_PWD/../openssl1.0.2p/lib -lssl -lcrypto
 INCLUDEPATH += ../openssl1.0.2p/include/
 LIBS += -lcommon -L$$OUT_PWD/../libs/

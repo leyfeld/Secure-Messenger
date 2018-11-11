@@ -26,9 +26,11 @@ SOURCES += \
         common.cpp \
         clientlist.cpp
 
+
 HEADERS += \
         common.h \
         clientlist.h \
         servererror.h \
-    messageprotocol.h
+        messageprotocol.h \
+        messagelist.h
 
