@@ -16,7 +16,9 @@ int CryptoWorker::Encrypt(const QString &forLogin, const QString& string, QByteA
 {
     int size =string.size()+127;
     encstring.resize(size);
-    unsigned char* plaintext = (unsigned char*)string.toStdString().c_str();
+    QByteArray message = string.toUtf8();
+    int messize = message.size();
+    unsigned char* plaintext = reinterpret_cast <unsigned char* >(message.data());
     std::unique_ptr<EVP_CIPHER_CTX, void(*)(EVP_CIPHER_CTX *)> ctx(EVP_CIPHER_CTX_new(), EVP_CIPHER_CTX_free);
     int len=0;
     int ciphertext_len=0;
@@ -31,7 +33,7 @@ int CryptoWorker::Encrypt(const QString &forLogin, const QString& string, QByteA
         handleErrors();
     }
     unsigned char* ciphertext = reinterpret_cast<unsigned char*>(encstring.data());
-    if(1 != EVP_EncryptUpdate(ctx.get(), ciphertext, &len, plaintext, string.size()))
+    if(1 != EVP_EncryptUpdate(ctx.get(), ciphertext, &len, plaintext, messize))
     {
         handleErrors();
     }
@@ -48,8 +50,8 @@ int CryptoWorker::Encrypt(const QString &forLogin, const QString& string, QByteA
 int CryptoWorker::Decrypt(const QString& login, const QByteArray &encstring, QString &decrtext)
 {
     std::unique_ptr<EVP_CIPHER_CTX, void(*)(EVP_CIPHER_CTX *)> ctx(EVP_CIPHER_CTX_new(), EVP_CIPHER_CTX_free);
-    int len;
-    int plaintext_len;
+    int len=0;
+    int plaintext_len=0;
     if(ctx.get() == nullptr )
     {
         handleErrors();
@@ -74,7 +76,7 @@ int CryptoWorker::Decrypt(const QString& login, const QByteArray &encstring, QSt
     }
     plaintext_len += len;
     tempArray.resize(plaintext_len);
-    decrtext = tempArray;
+    decrtext = QString::fromUtf8(tempArray);
     return plaintext_len;
 }
 
