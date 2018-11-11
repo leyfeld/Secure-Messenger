@@ -26,25 +26,25 @@ Item {
         target: qmlConnection;
         onToChatList:{
 
-            listModel.append({itemText:log, clrItem:(offOn==true)? "#FFC107" : "#414037"})
+                listModel.append({itemText:log, clrItem:(offOn==true)? "#FFC107" : "#414037"})
 
-        }
-        onToMessageList:
-        {
-            lmMessage.append({txtMessage:mes,
-                                 lmMessage:20})
-            lvMessage.positionViewAtEnd()
-        }
-        onToPrevMessageList:{
-            lmMessage.append({txtMessage:mes,
-                                 lmMessage:(direction=="to")? 400 : 20})
-            lvMessage.positionViewAtEnd()
-        }
-        onToGetFile :
-        {
-            //console.log("emit file sig")
-            fDialog.open()
-        }
+            }
+            onToMessageList:
+            {
+                lmMessage.append({txtMessage:mes,txtTime:time,
+                                     lmMessage:20})
+                lvMessage.positionViewAtEnd()
+            }
+            onToPrevMessageList:{
+                lmMessage.append({txtMessage:mes,txtTime:time,
+                                     lmMessage:(direction=="to")? 400 : 20})
+                lvMessage.positionViewAtEnd()
+            }
+            onToGetFile :
+            {
+                //console.log("emit file sig")
+                fDialog.open()
+            }
     }
 
     Component {
@@ -66,256 +66,272 @@ Item {
         Material.accent: "#414037"
         contentWidth: parent.width
 
-        TabButton
-        {
-            id:btnChatList
-            text: qsTr("Chat List")
-            width: Math.max(100, bar.width / 2)
-            Image{
-                id: iRefresh
-                source: "pics/Refresh_pic_2.png"
-                width: Math.max((parent.height)*0.6)
-                height:Math.max((parent.height)*0.6)
-                anchors.verticalCenter: parent.verticalCenter
-                anchors.right:parent.right
-                anchors.rightMargin: 20
-                MouseArea {
-                    id: maRefresh
-                    anchors.fill: parent
-                    hoverEnabled: true
-                    onClicked:
-                    {
-                        listModel.clear()
-                        qmlConnection.refreshChatList();
-                    }
-                    onEntered:
-                    {
-                        iRefresh.source="pics/Refresh_pic_1.png"
-                    }
-                    onExited:
-                    {
-                        iRefresh.source= "pics/Refresh_pic_2.png"
+         TabButton
+         {
+                id:btnChatList
+                text: qsTr("Chat List")
+                width: Math.max(100, bar.width / 2)
+                Image{
+                    id: iRefresh
+                    source: "pics/Refresh_pic_2.png"
+                    width: Math.max((parent.height)*0.6)
+                    height:Math.max((parent.height)*0.6)
+                    anchors.verticalCenter: parent.verticalCenter
+                    anchors.right:parent.right
+                    anchors.rightMargin: 20
+                    MouseArea {
+                        id: maRefresh
+                        anchors.fill: parent
+                        hoverEnabled: true
+                        onClicked:
+                        {
+                            listModel.clear()
+                            qmlConnection.refreshChatList();
+
+                        }
+
+                        onEntered:
+                        {
+                            iRefresh.source="pics/Refresh_pic_1.png"
+                        }
+                        onExited:
+                        {
+                            iRefresh.source= "pics/Refresh_pic_2.png"
+                        }
                     }
                 }
-            }
-            onClicked: {
-                lmMessage.clear();
-                btnMessageList.text="Messages List"
-            }
-        }
-        Dialog{
+
+                onClicked: {
+                    lmMessage.clear();
+                    btnMessageList.text="Messages List"
+                }
+
+         }
+
+         Dialog{
             id: fDialog
             title: "Would you like add new file?"
             standardButtons: Dialog.Ok | Dialog.Cancel
             Label {
-                id: textLabel
-                text: qsTr("Would you like add the new file?")
-                color: "#34aadc"
-                anchors.centerIn: parent // Помещаем сообщение в центре области для сообщения
+                    id: textLabel
+                    text: qsTr("Would you like add the new file?")
+                    color: "#34aadc"
+                    anchors.centerIn: parent // Помещаем сообщение в центре области для сообщения
+                  }
+                onAccepted:
+                {
+                    console.log("Ok clicked")
+                    qmlConnection.okSendFile()
+                }
+                onRejected:
+                {
+                    console.log("Cancel clicked")
+                    qmlConnection.cancelFile()
+                }
             }
-            onAccepted:
-            {
-                console.log("Ok clicked")
-                qmlConnection.okSendFile()
-            }
-            onRejected:
-            {
-                console.log("Cancel clicked")
-                qmlConnection.cancelFile()
-            }
-        }
 
-        TabButton
-        {
-            id: btnMessageList
-            objectName: "btnMessageList"
-            text: qsTr("Messages List")
-            width: Math.max(100, bar.width / 2)
-            onClicked: {
-                bar.currentIndex=0
-            }
-        }
-    }
+         TabButton
+         {
+                  id: btnMessageList
+                  objectName: "btnMessageList"
+                  text: qsTr("Messages List")
+                  width: Math.max(100, bar.width / 2)
+                  onClicked: {
+                      bar.currentIndex=0
+                  }
+         }
+   }
     StackLayout
     {
-        anchors.top: bar.bottom
-        width: parent.width
-        currentIndex: bar.currentIndex
-        Item
-        {
-            id: chatList
+       anchors.top: bar.bottom
+       width: parent.width
+       currentIndex: bar.currentIndex
+       Item
+       {
+           id: chatList
 
-            ScrollView
-            {
-                id: scrollView
-                anchors.top: parent.top
-                width: 640
-                height: 438
-                ListView
+         ScrollView
+         {
+           id: scrollView
+           anchors.top: parent.top
+           width: 640
+           height: 438
+           ListView
+           {
+               id:clientListView
+               width: 640
+               clip: true
+               anchors.top: parent.top
+               highlight: highlightBar
+               highlightFollowsCurrentItem: true
+               model: ListModel{
+                   id: listModel
+               }
+
+               delegate: Item
+             {
+                 id:listClientItem
+                 objectName: "listClientItem"
+                 anchors.left: parent.left
+                 anchors.right: parent.right
+                 height: 40
+                Text
                 {
-                    id:clientListView
-                    width: 640
-                    clip: true
-                    anchors.top: parent.top
-                    highlight: highlightBar
-                    highlightFollowsCurrentItem: true
-                    model: ListModel{
-                        id: listModel
-                    }
-
-                    delegate: Item
-                    {
-                        id:listClientItem
-                        objectName: "listClientItem"
-                        anchors.left: parent.left
-                        anchors.right: parent.right
-                        height: 40
-                        Text
-                        {
-                            id: txtItem
-                            color: clrItem
-                            text: itemText
-                            font.underline: false
-                            font.bold: false
-                            font.pixelSize: 16
-                            leftPadding: 20
-                            topPadding: 10
-                        }
-                        MouseArea {
-                            id: maClientItem
-                            anchors.fill: parent
-                            hoverEnabled: true
-                            onClicked:
-                            {
-
-                                bar.currentIndex=1;
-                                btnMessageList.text=txtItem.text
-                                qmlConnection.messageList(txtItem.text)
-
-                            }
-                            onEntered:
-                            {
-                                clientListView.currentIndex=index
-                            }
-
-
-                        }
-
-                    }
-
-
+                 id: txtItem
+                 color: clrItem
+                 text: itemText
+                 font.underline: false
+                 font.bold: false
+                 font.pixelSize: 16
+                 leftPadding: 20
+                 topPadding: 10
                 }
-            }
+                 MouseArea {
+                     id: maClientItem
+                     anchors.fill: parent
+                     hoverEnabled: true
+                     onClicked:
+                     {
+
+                         bar.currentIndex=1;
+                         btnMessageList.text=txtItem.text
+                         qmlConnection.messageList(txtItem.text)
+
+                     }
+                     onEntered:
+                     {
+                         clientListView.currentIndex=index
+                     }
+
+
+             }
+
+           }
+
+
+         }
         }
-        Item
-        {
-            id: item1
-            width: 640
-            height: 433
+}
+       Item
+       {
+           id: item1
+           width: 640
+           height: 433
 
-            ScrollView
-            {
-                id: svMessage
-                anchors.top: parent.top
-                width: 640
-                height: 350
-                ListView
-                {
-                    id:lvMessage
-                    width: 640
-                    clip: true
-                    anchors.top: parent.top
-                    anchors.topMargin: 10
-                    model: ListModel{
-                        id: lmMessage
-                    }
+           ScrollView
+           {
+             id: svMessage
+             anchors.top: parent.top
+             width: 640
+             height: 350
+             ListView
+             {
+                 id:lvMessage
+                 width: 640
+                 clip: true
+                 anchors.top: parent.top
+                 anchors.topMargin: 10
+                 model: ListModel{
+                     id: lmMessage
+                 }
 
-                    delegate: Item
+                 delegate: Item
+               {
+                   id:iMessage
+                   objectName: "iMessage"
+                   anchors.left: parent.left
+                   anchors.right: parent.right
+                   height: Math.max((txtIMessage.contentHeight+txtITime.contentHeight) * 1.5)
+                   //clip:true
+                  Rectangle{
+                      anchors.left: parent.left;
+                      anchors.leftMargin: lmMessage
+                      width:220
+                      height:Math.max(parent.height*0.85)
+                      color:"#EEEEEE"
+                      border.color: "#FFF59D"
+                      border.width:1
+                      radius:10
+                    Text
                     {
-                        id:iMessage
-                        objectName: "iMessage"
-                        anchors.left: parent.left
-                        anchors.right: parent.right
-                        height: Math.max(txtIMessage.contentHeight * 1.5)
-                        //clip:true
-                        Rectangle{
-                            anchors.left: parent.left;
-                            anchors.leftMargin: lmMessage
-                            width:220
-                            height:Math.max(parent.height*0.85)
-                            color:"#EEEEEE"
-                            border.color: "#FFF59D"
-                            border.width:1
-                            radius:10
-                            Text
-                            {
-                                id: txtIMessage
-                                width:200
-                                wrapMode: Text.Wrap
-                                //property alias txtIMessage: txtIMessage
-                                color: "#414037"
-                                text: txtMessage
-                                font.underline: false
-                                font.bold: false
-                                font.pixelSize: 16
-                                topPadding: Math.max((parent.height-contentHeight)/2)
-                                leftPadding: 10
-                            }
+                        id: txtIMessage
+                        width:200
+                        wrapMode: Text.Wrap
+                        //property alias txtIMessage: txtIMessage
+                        color: "#414037"
+                        text: txtMessage
+                        font.underline: false
+                        font.bold: false
+                        font.pixelSize: 16
+                        topPadding: Math.max((parent.height-contentHeight-txtITime.contentHeight)/2)
+                        leftPadding: 10
+                    }
+                    Text{
+                        id:txtITime
+                        width: txtIMessage.width
+                        anchors.top:txtIMessage.bottom
+                        wrapMode: Text.Wrap
+                        color: "#9E9E9E"
+                        text: txtTime
+                        font.underline: false
+                        font.bold: false
+                        font.pixelSize: 12
+                        leftPadding: 10
+                    }
+                  }
+             }
+
+           }
+           }
+
+           ScrollView {
+               id: svText
+               anchors.left: parent.left
+               anchors.bottom: parent.bottom
+               anchors.bottomMargin: 8
+               rightPadding: 15
+               anchors.leftMargin: 30
+               width:440
+               height:50
+               TextArea
+              {
+                id: field1
+                clip: true
+                height: 50
+                objectName: "field1"
+                Material.accent: "#414037"
+                wrapMode: Text.Wrap
+                placeholderText: "Введите текст"
+            }
+           }
+                Image {
+                    id: attachBtnImage
+                    anchors.left: svText.right
+                    anchors.leftMargin: 10
+                    anchors.right: button.left
+                    anchors.rightMargin: 10
+                    anchors.bottom: parent.bottom
+                    anchors.bottomMargin: 10
+                    height:44
+                    source: "pics/duck.png"
+                    MouseArea{
+                        id: maAttach
+                        anchors.fill: parent
+                        hoverEnabled: true
+                        onClicked:
+                        {
+                            fileDialog.open()
+                        }
+                        onEntered:
+                        {
+                            attachBtnImage.source= "pics/duck_1.png"
+                        }
+                        onExited:
+                        {
+                            attachBtnImage.source= "pics/duck.png"
                         }
                     }
-
-                }
-            }
-
-            ScrollView {
-                id: svText
-                y: 375
-                anchors.left: parent.left
-                anchors.bottom: parent.bottom
-                anchors.bottomMargin: 8
-                rightPadding: 15
-                anchors.leftMargin: 39
-                width:431
-                height:50
-                TextArea
-                {
-                    id: field1
-                    clip: true
-                    height: 50
-                    objectName: "field1"
-                    Material.accent: "#414037"
-                    wrapMode: Text.Wrap
-                    placeholderText: "Введите текст"
-                }
-            }
-            Image {
-                id: attachBtnImage
-                anchors.left: svText.right
-                anchors.leftMargin: 10
-                anchors.right: button.left
-                anchors.rightMargin: 10
-                anchors.bottom: parent.bottom
-                anchors.bottomMargin: 10
-                height:44
-                source: "pics/duck.png"
-                MouseArea{
-                    id: maAttach
-                    anchors.fill: parent
-                    hoverEnabled: true
-                    onClicked:
-                    {
-                        fileDialog.open()
-                    }
-                    onEntered:
-                    {
-                        attachBtnImage.source= "pics/duck_1.png"
-                    }
-                    onExited:
-                    {
-                        attachBtnImage.source= "pics/duck.png"
-                    }
-                }
-              }
+                  }
             Text {
                 id: filename
                 x: 85
@@ -384,18 +400,18 @@ Item {
             }
             Button {
                 id: keybutton
-                x: 8
-                y: 392
-                height: 29
+                x: 0
+                y: 0
+                height: 40
                 objectName: "keybutton"
                 text: qsTr("key")
                 anchors.left: parent.left
-                anchors.leftMargin: 8
+                anchors.leftMargin: 598
                 Material.background: "#FFF59D"
                 anchors.right: parent.right
                 anchors.bottom: parent.bottom
-                anchors.bottomMargin: 19
-                anchors.rightMargin: 602
+                anchors.bottomMargin: 434
+                anchors.rightMargin: 0
                 onClicked: {
                     keyMessage.open()
                     qmlConnection.getKey()

@@ -13,22 +13,22 @@ qmlConnect::qmlConnect() : client(new ChatProtocol())
 }
 void qmlConnect::CreateConnection(const QString& ip)
 {
-        connect(client.get(), SIGNAL(SigGetMessage(const QString &, const QString &, const QDateTime)),this,
-                SLOT(slotReadMessage(const QString &, const QString &, const QDateTime& )));
-        connect(client.get(), SIGNAL(SigAllFile(const QString &, const QString &, const QDateTime)),this,
-                SLOT(slotReadMessage(const QString &, const QString &, const QDateTime& )));
-        connect(client.get(), SIGNAL(SigAnswerReg(ServerError)),this, SLOT(slotRegistrationError(ServerError)));
-        connect(client.get(), SIGNAL(SigAnswerLogin(ServerError)),this, SLOT(slotRegistrationError(ServerError)));
-        connect(client.get(), SIGNAL (SigGetClientList(const QVector <ClientList> & )),
-                this, SLOT(chatListChange(const QVector <ClientList> & )));
-        connect(client.get(), SIGNAL (SigGetFile(const QString &)),this, SLOT(slotGetFile(const QString &)));
-        connect(client.get(), SIGNAL(SigSendFileTo(const QString&)), this, SLOT(transportFile(QString)));
-        connect(client.get(), SIGNAL (SigErrorHappened(const QString& )),
-                this, SLOT(slotServerError(const QString& )));
-        connect(client.get(),SIGNAL(SigConnected()),this,SLOT(slotServerConnected()));
-        connect(client.get(), SIGNAL (SigReturnMessage(const QString &)),this, SLOT(slotReturnMessage(const QString &)));
-        connect(client.get(), SIGNAL (SigAnswerReturnMessage(const QString&, QList <QVariant> )),
-                this, SLOT (slotAnswerReturnMessage(const QString& , QList <QVariant>)));
+            connect(client.get(), SIGNAL(SigGetMessage(const QString &, const QString &, const QDateTime)),this,
+                    SLOT(slotReadMessage(const QString &, const QString &, const QDateTime& )));
+            connect(client.get(), SIGNAL(SigAllFile(const QString &, const QString &, const QDateTime)),this,
+                    SLOT(slotReadMessage(const QString &, const QString &, const QDateTime& )));
+            connect(client.get(), SIGNAL(SigAnswerReg(ServerError)),this, SLOT(slotRegistrationError(ServerError)));
+            connect(client.get(), SIGNAL(SigAnswerLogin(ServerError)),this, SLOT(slotRegistrationError(ServerError)));
+            connect(client.get(), SIGNAL (SigGetClientList(const QVector <ClientList> & )),
+                    this, SLOT(chatListChange(const QVector <ClientList> & )));
+            connect(client.get(), SIGNAL (SigGetFile(const QString &)),this, SLOT(slotGetFile(const QString &)));
+            connect(client.get(), SIGNAL(SigSendFileTo(const QString&)), this, SLOT(transportFile(QString)));
+            connect(client.get(), SIGNAL (SigErrorHappened(const QString& )),
+                    this, SLOT(slotServerError(const QString& )));
+            connect(client.get(),SIGNAL(SigConnected()),this,SLOT(slotServerConnected()));
+            connect(client.get(), SIGNAL (SigReturnMessage(const QString &)),this, SLOT(slotReturnMessage(const QString &)));
+            connect(client.get(), SIGNAL (SigAnswerReturnMessage(const QString&, QList <QVariant> )),
+                    this, SLOT (slotAnswerReturnMessage(const QString& , QList <QVariant>)));
 
         client->ConnectEncrypted(ip, 2323);
 }
@@ -38,25 +38,22 @@ void qmlConnect::SetRootObj(QObject* RObj)
 }
 void qmlConnect::slotServerConnected()
 {
+    QString password;
+    password=(fldPassword->property("text")).toString();
+    SecurePassword sPsw(password);
     if(fldName)
     {
-
-        QString vName, password;
+        QString vName;
         vName=(fldName->property("text")).toString(); 
-        password=(fldPassword->property("text")).toString();
-        SecurePassword sPsw(password);
         dbClient->CreateSoltTable(myLogin, sPsw.GetRandomString());
         QByteArray psw =sPsw.GetHash();
         qDebug()<<vName<<psw;
         client->SendRegistrationToServer(myLogin,vName,psw);
     }
-    if(!fldName)
+    else
     {
-        QString password;
-        password=(fldPassword->property("text")).toString();
-        SecurePassword sPsw(password);
         sPsw.SetSolt(dbClient->GetSolt(myLogin));
-        QByteArray psw =sPsw.GetHash();
+        QByteArray psw = sPsw.GetHash();
         qDebug()<<myLogin<<psw;
         client->SendLoginToServer(myLogin,psw);
     }
@@ -263,10 +260,13 @@ void qmlConnect::cancelSendFile()
 void qmlConnect::slotReadMessage(const QString& log, const QString& mes, const QDateTime & time)
 {
     tabBar=viewer->findChild<QObject*>("bar");
+    btnTabBar=viewer->findChild<QObject*>("btnMessageList");
+    QString lg;
+    lg=(btnTabBar->property("text")).toString();
     bool tabBtn=(tabBar->property("currentIndex")).toBool();
     qDebug()<<log<<mes<<time;
     dbClient->InsertReceiveMessage(log, mes, time);
-    if(tabBtn)
+    if(tabBtn && (lg==log) )
         emit toMessageList(mes, time.toString("hh:mm ap\nddd MMMM d yy"));
 }
 void qmlConnect::slotAnswerReturnMessage(const QString& login, QList <QVariant> RetMessage)
