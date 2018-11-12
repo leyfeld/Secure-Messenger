@@ -27,11 +27,13 @@ private:
     QObject* tabBar=nullptr;
     QObject* listview=nullptr;
     QString myLogin;
+    QString solt;
     QString m_attachmentPath;
     QString fileLogin;
     std::unique_ptr<ChatProtocol> client;
     std::unique_ptr <database> dbClient;
     bool IsConnected=false;
+    bool IsSendLogin=false;
 public: 
     qmlConnect();
     QVector <Messagelist> mesList;
@@ -56,7 +58,9 @@ public slots:
    void messageForm();
    void chooseFile(const QUrl &url);
    void cancelFile();
+   void getKey();
    void refreshChatList();
+   void sendLoginAndPassword(const QString solt);
    void messageList(const QString& log);
    void slotReadMessage(const QString& log, const QString& me, const QDateTime & time);
    void slotRegistrationError(ServerError);

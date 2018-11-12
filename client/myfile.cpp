@@ -21,7 +21,6 @@ void FileSender::slotTransferFile()
     qint64 full_max_bytes = max_bytes;
     qint64 read_bytes = 0;
     QFile file(m_filename);
-    qDebug()<<m_filename;
     if(!file.open(QIODevice::ReadOnly))
     {
         qDebug() << "Can't read from file '" << m_filename;

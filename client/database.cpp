@@ -41,6 +41,7 @@ void database:: InsertSendMessage (const QString& login, const QString& message,
     {
         qDebug() << "Can't insert message: " << query.lastError().text();
     }
+    query.finish();
 }
 
 void database:: InsertReceiveMessage (const QString& login, const QString& message, const QDateTime& time)
@@ -65,9 +66,10 @@ void database:: InsertReceiveMessage (const QString& login, const QString& messa
     {
         qDebug() << "Can't insert message: " << query.lastError().text();
     }
+    query.finish();
 }
 
-void database::GetMessage(const QString& login, QVector<Messagelist> & mesList)
+void database::GetMessageW(const QString& login, QVector<Messagelist> & mesList)
 {
     mesList.resize(0);
     qDebug()<<"We want old message";
@@ -93,6 +95,7 @@ void database::GetMessage(const QString& login, QVector<Messagelist> & mesList)
         mes=query.value(0).toString();
         mesList.push_back({dir, mesDate, mes});
     }
+    query.finish();
 }
 
 void database::ReturnMessage(const QString& login, QList <QVariant> & mesList)
@@ -129,10 +132,8 @@ void database::ReturnMessage(const QString& login, QList <QVariant> & mesList)
             mesList.push_back(vMessageList);
         }
     }
-
-
-
-
+    queryTable.finish();
+    queryMessage.finish();
 }
 bool database::IsDBEmpty(const QVector<ClientList>& chatList)
 {
@@ -145,8 +146,12 @@ bool database::IsDBEmpty(const QVector<ClientList>& chatList)
         }
 
         if(query.next())
+        {
+            query.finish();
             return false;
+        }
     }
+     query.finish();
      return true;
 }
 
@@ -167,7 +172,7 @@ void database::CreateSoltTable(const QString& login,const QString & solt)
     {
         qDebug() << "Can't insert message: " << query.lastError().text();
     }
-
+    query.finish();
 }
 
 QString database::GetSolt(const QString& login)
@@ -178,25 +183,32 @@ QString database::GetSolt(const QString& login)
     tableName=login+"Init";
     if(!query.exec("SELECT solt FROM "+tableName))
     {
-         qDebug() << query.lastError().text();
+        qDebug() << query.lastError().text();
     }
 
     if(query.next())
     {
-        return query.value(0).toString();
+        QString str=query.value(0).toString();
+        query.finish();
+        return str;
     }
+    //query.finish();
     return "Solt not exist";
 }
 
 database::~database()
 {
+    QSqlDatabase db;
     if (!QSqlDatabase::contains(cnDbSendMessage))
     {
         qDebug() << "Can't find db connection";
         return;
     }
-    QSqlDatabase db = QSqlDatabase::database(cnDbSendMessage);
-    db.close();
-    db = QSqlDatabase();
+
+        //db = QSqlDatabase::database(cnDbSendMessage);
+        db.close();
+
+
+    //db = QSqlDatabase();
     QSqlDatabase::removeDatabase(cnDbSendMessage);
 }

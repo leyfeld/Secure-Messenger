@@ -2,19 +2,22 @@
     error( "Couldn't find the project_config.pri file!" )
 }
 
-QT += core
-QT += network
-QT += quick quickcontrols2
-QT +=network
-QT +=sql
-QT += widgets
+#-------------------------------------------------
+#
+# Project created by QtCreator 2018-09-27T22:52:09
+#
+#-------------------------------------------------
 
-CONFIG += c++11
+QT += core gui
+QT += widgets
+QT += network
+QT += sql
+
+TARGET = ../project/server
 TEMPLATE = app
-TARGET = ../project/client
 
 # The following define makes your compiler emit warnings if you use
-# any feature of Qt which as been marked deprecated (the exact warnings
+# any feature of Qt which has been marked as deprecated (the exact warnings
 # depend on your compiler). Please consult the documentation of the
 # deprecated API in order to know how to port your code away from it.
 DEFINES += QT_DEPRECATED_WARNINGS
@@ -24,32 +27,23 @@ DEFINES += QT_DEPRECATED_WARNINGS
 # You can also select to disable deprecated APIs only up to a certain version of Qt.
 #DEFINES += QT_DISABLE_DEPRECATED_BEFORE=0x060000    # disables all the APIs deprecated before Qt 6.0.0
 
+CONFIG += c++11
+
 SOURCES += \
         main.cpp \
-    chatprotocol.cpp\
-    qmlconnect.cpp \
     database.cpp \
-    myfile.cpp \
-    threadsend.cpp \
-    cryptoworker.cpp\
-    securepassword.cpp
-RESOURCES += \
-    qml.qrc
+    myserver.cpp \
+    loginandsmsfunct.cpp \
+    sslserver.cpp
+
+HEADERS += \
+    myserver.h \
+    database.h \
+    loginandsmsfunct.h \
+    sslserver.h
+
+LIBS += -lcommon -L$$OUT_PWD/../libs/
+INCLUDEPATH += ../common
 
 RESOURCES += \
     cert.qrc
-
-HEADERS += \
-    qmlconnect.h \
-    database.h \
-    chatprotocol.h \
-    myfile.h\
-    threadsend.h \
-    cryptoworker.h\
-    securepassword.h
-LIBS += -L$$OUT_PWD/../openssl1.0.2p/lib -lssleay32 -llibeay32
-INCLUDEPATH += ../openssl1.0.2p/include/
-LIBS += -lcommon -L$$OUT_PWD/../libs/
-LIBS += -L$$OUT_PWD/../openssl1.0.2p/lib/ssleay32.lib
-message($$OUT_PWD);
-INCLUDEPATH += ../common

@@ -22,6 +22,7 @@ private:
     QMap <QString, QAbstractSocket*> m_clientMap;
     std::unique_ptr<ServDb> m_sdb;
     QVector<ClientList> chatList;
+    QMap <QString, QByteArray> m_clientKey;
 
 private:
     template <typename T>
@@ -33,11 +34,14 @@ private:
 
 public:
     MyServer(int nPort, QWidget* pwgt = 0);
+signals:
+            void SigNameDelete(const QString& name);
 public slots:
     virtual void slotNewConnection();
             void slotReadClient   ();
             void slotDeleteMap();
             void slotEncryptedReady();
+            void slotSendSig(const QString&name);
 };
 
 

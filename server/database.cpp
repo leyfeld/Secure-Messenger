@@ -22,7 +22,7 @@ void ServDb:: createConnection()
         return;
     }
     QSqlQuery query(db);
-    if (!query.exec("create table if not exists person (id integer primary key autoincrement, login varchar(20), name varchar(20), hashPassword varchar(20))"))
+    if (!query.exec("create table if not exists person (id integer primary key autoincrement, login varchar(20), name varchar(20), hashPassword varchar(50), solt varchar(20))"))
     {
         qDebug() << "Can't create table: " << query.lastError().text();
     }
@@ -38,7 +38,29 @@ bool ServDb:: IsHasClient(const QString& name)
     }
     return query.next();
 }
-bool ServDb:: LoginCheck(const QString& login, const QString& password)
+bool ServDb:: LoginCheck(const QString& login, QString& solt)
+{
+    QSqlDatabase db = QSqlDatabase::database(m_serverDatabase);
+    QSqlQuery query(db);
+    query.exec(QString("select * from person where login = '%1'").arg(login));
+    if (!query.exec())
+    {
+        qDebug() << "Can't select person: " << query.lastError().text();
+        return false;
+    }
+    if (query.next())
+    {
+        solt=query.value(4).toString();
+//       if(password != query.value(3).toString())
+//       {
+//           return false;
+//       }
+       return true;
+    }
+    return false;
+}
+
+bool ServDb:: LoginAndPasswordCheck(const QString& login, const QString& password)
 {
     QSqlDatabase db = QSqlDatabase::database(m_serverDatabase);
     QSqlQuery query(db);
@@ -58,7 +80,7 @@ bool ServDb:: LoginCheck(const QString& login, const QString& password)
     }
     return false;
 }
-void ServDb:: ServInsert(const QString &login, const QString &name, const QString &hashPassword)
+void ServDb:: ServInsert(const QString &login, const QString &name, const QString &hashPassword, const QString &solt)
 {
     if (!QSqlDatabase::contains(m_serverDatabase))
     {
@@ -67,10 +89,11 @@ void ServDb:: ServInsert(const QString &login, const QString &name, const QStrin
     }
     QSqlDatabase db = QSqlDatabase::database(m_serverDatabase);
     QSqlQuery query(db);
-    query.prepare("INSERT INTO person (id, login, name, hashPassword) values(null, :login, :name, :hashPassword)");
+    query.prepare("INSERT INTO person (id, login, name, hashPassword, solt) values(null, :login, :name, :hashPassword, :solt)");
     query.bindValue(":login", login);
     query.bindValue(":name", name);
     query.bindValue(":hashPassword", hashPassword);
+    query.bindValue(":solt", solt);
     if (!query.exec())
     {
         qDebug() << "Can't insert person: " << query.lastError().text();

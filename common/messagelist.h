@@ -4,6 +4,7 @@
 #include <QString>
 #include <QDateTime>
 #include <QMetaType>
+#include <QDataStream>
 
 class Messagelist
 {
