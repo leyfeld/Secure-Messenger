@@ -56,18 +56,22 @@ void ChatProtocol::Send(LoginAndSmsProtocol protocolCommand, const QList<QVarian
     ThreadSend* senderThread = new ThreadSend(protocolCommand, params, m_socket, m_mutex);
     QThreadPool::globalInstance()->start(senderThread);
 }
-void ChatProtocol::SendRegistrationToServer(const QString& login,const QString& name, const QString& password)
+void ChatProtocol::SendRegistrationToServer(const QString& login,const QString& name, const QString& password,const QString& solt)
 {
     qDebug() <<"SendRegistrationToServer: ";
-    Send(LoginAndSmsProtocol::registration, {login, name, password});
+    Send(LoginAndSmsProtocol::registration, {login, name, password,solt});
 }
 
-void ChatProtocol::SendLoginToServer(const QString &login, const QString &password)
+void ChatProtocol::SendLoginToServer(const QString &login)
 {
     qDebug() <<"SendLoginToServer: ";
-    Send(LoginAndSmsProtocol::login, {login, password});
+    Send(LoginAndSmsProtocol::login, {login});
 }
-
+void ChatProtocol::SendLoginAndPasswordToServer(const QString& login, const QString& password)
+{
+    qDebug() <<"SendLoginAndPasswordToServer: ";
+    Send(LoginAndSmsProtocol::loginAndPassword, {login, password});
+}
 void ChatProtocol::SendMessageToClient(const QString &name,const QString &sms)
 {
     qDebug() <<"SendMessageToClient: ";
@@ -100,6 +104,12 @@ void ChatProtocol::ReturnMessage(const QString &loginSentTo, const QList <QVaria
 const QString ChatProtocol::GetSKey(const QString &login)
 {
     QByteArray key =  m_crypto->GetKey(login);
+    if(key.isEmpty())
+    {
+        QByteArray nkey(32,'\0');
+        QString skey = nkey.toHex();
+        return skey;
+    }
     key.resize(32);
     QString skey = key.toHex();
     return skey;
@@ -187,6 +197,7 @@ void ChatProtocol::slotReadyRead()
         QDateTime   time;
         QString loginProtocol;
         in >> time >> loginProtocol;
+        qDebug()<<"LoginProtocol"<<loginProtocol;
         if(static_cast<ServerError>(loginProtocol.toUInt()) == ServerError::LoginOffline)
         {
             QString filename;
@@ -203,6 +214,7 @@ void ChatProtocol::slotReadyRead()
                 in >> serAnswer;
                 if(static_cast<ServerError>(serAnswer.toUInt()) ==  ServerError::Success)
                 {
+                    emit SigSuccess();
                     m_crypto.reset(new CryptoWorker());
                     pubKey = m_crypto->GetPublicKey();
                     SendPublicKey(pubKey);
@@ -212,18 +224,40 @@ void ChatProtocol::slotReadyRead()
              }
             case LoginAndSmsProtocol::login:
             {
+                qDebug()<<"Get Login Answer";
                 QString serAnswer;
-                in >> serAnswer;
+                QVariant slt;
+                in >> serAnswer>>slt;
+                QString solt=slt.toString();
+                qDebug()<<"Solt:"<<solt;
                 if(static_cast<ServerError>(serAnswer.toUInt()) ==  ServerError::Success)
                 {
-                    m_crypto.reset(new CryptoWorker());
-                    pubKey = m_crypto->GetPublicKey();
-                    SendPublicKey(pubKey);
+                    qDebug()<<"sig SigSendLoginAndPassword";
+                    emit SigSendLoginAndPassword(solt);
+//                    m_crypto.reset(new CryptoWorker());
+//                    pubKey = m_crypto->GetPublicKey();
+//                    SendPublicKey(pubKey);
                 }
-                qDebug() <<"LoginAndSmsProtocol::login: ";
+                else
                 emit SigAnswerLogin(static_cast<ServerError>(serAnswer.toUInt()));
                 break;
             }
+        case LoginAndSmsProtocol::loginAndPassword:
+        {
+            QString serAnswer;
+            in >> serAnswer;
+            if(static_cast<ServerError>(serAnswer.toUInt()) ==  ServerError::Success)
+            {
+                    emit SigSuccess();
+                    m_crypto.reset(new CryptoWorker());
+                    pubKey = m_crypto->GetPublicKey();
+                    SendPublicKey(pubKey);
+            }
+            //qDebug() <<"LoginAndSmsProtocol::login: ";
+            emit SigAnswerLogin(static_cast<ServerError>(serAnswer.toUInt()));
+            break;
+        }
+
             case LoginAndSmsProtocol::sendChatList:
             {
                 in >> chatList;
@@ -239,7 +273,10 @@ void ChatProtocol::slotReadyRead()
                 in>>whosend>>message;
                 QByteArray mes = message.toByteArray();
                 QString decmes;
+                qDebug()<<"encrypted message"<<mes;
                 m_crypto->Decrypt(whosend,mes,decmes);
+
+                qDebug()<<"Decrypted message"<<decmes;
                 emit SigGetMessage(whosend, decmes, time);
                 break;
             }

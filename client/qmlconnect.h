@@ -27,18 +27,21 @@ private:
     QObject* tabBar=nullptr;
     QObject* listview=nullptr;
     QString myLogin;
+    QString solt;
     QString m_attachmentPath;
     QString fileLogin;
     std::unique_ptr<ChatProtocol> client;
     std::unique_ptr <database> dbClient;
     bool IsConnected=false;
+    bool IsSendLogin=false;
+    bool registration = false;
 public: 
     qmlConnect();
     QVector <Messagelist> mesList;
     void SetRootObj (QObject* RObject=nullptr);
     void OpenClientDB();
     void CreateConnection(const QString &ip);
-    bool IsLogStatusOk (const QString&);
+    bool IsLogStatusOk (const QString&, const QString &passw);
     bool IsForbidSign(const QString &);
 
 
@@ -58,6 +61,7 @@ public slots:
    void cancelFile();
    void getKey();
    void refreshChatList();
+   void sendLoginAndPassword(const QString solt);
    void messageList(const QString& log);
    void slotReadMessage(const QString& log, const QString& me, const QDateTime & time);
    void slotRegistrationError(ServerError);
@@ -70,6 +74,7 @@ public slots:
    void slotServerConnected();
    void slotReturnMessage(const QString &login);
    void slotAnswerReturnMessage(const QString& login, QList <QVariant> RetMessage);
+   void slotClientConnected();
 protected:
    QObject *viewer;
 
