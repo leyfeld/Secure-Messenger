@@ -12,8 +12,8 @@ enum class LoginAndSmsProtocol
     requestMessage=8,
     answerMessage=9,
     sendPublicKey = 10,
-    deleteClient = 11
-//getOneAnswerMessage=10
+    deleteClient = 11,
+    loginAndPassword=12
 
 };
 #endif // MESSAGEPROTOCOL_H

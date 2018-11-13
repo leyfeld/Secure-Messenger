@@ -52,7 +52,7 @@ MyServer::MyServer(int nPort, QWidget* pwgt /*=0*/) : QWidget(pwgt), m_nNextBloc
     connect(pClientSocket, SIGNAL(disconnected()), this, SLOT(slotDeleteMap()));
     connect(pClientSocket, SIGNAL(disconnected()), pClientSocket, SLOT(deleteLater()));
     connect(pClientSocket, SIGNAL(readyRead()), this, SLOT(slotReadClient()));
-    connect(pClientSocket, SIGNAL(SigNameDelete(cosnt QString&)), this, SLOT(slotSendSig(const QString&)));
+//    connect(this, SIGNAL(SigNameDelete(cosnt QString&)), this, SLOT(slotSendSig(const QString&)));
 
 
     qDebug()<<"slotnewconnection!";
@@ -63,7 +63,7 @@ void MyServer::slotDeleteMap()
    QString nameClient = m_clientMap.key(pClientSocket);
    m_clientMap.remove(nameClient);
    m_clientKey.remove(nameClient);
-   emit SigNameDelete(nameClient);
+   slotSendSig(nameClient);
 }
 
 void MyServer::slotEncryptedReady()
@@ -110,8 +110,9 @@ void MyServer::slotReadClient()
             QString login;
             QString name;
             QString password;
-            in >> login >> name >> password;
-            ServerError status = Registration(pClientSocket, m_clientMap, chatList, m_sdb.get(), login, name, password);
+            QString solt;
+            in >> login >> name >> password>>solt;
+            ServerError status = Registration(pClientSocket, m_clientMap, chatList, m_sdb.get(), login, name, password, solt);
             sendToClient(QString::number(static_cast<quint8>(LoginAndSmsProtocol::registration)), QString::number(static_cast<int>(status)), pClientSocket);
             if(status == ServerError::Success)
             {
@@ -122,16 +123,17 @@ void MyServer::slotReadClient()
         }
         case LoginAndSmsProtocol::login:
         {
-            QString login;
-            QString password;
-            in >> login >> password;
-            ServerError status = Login(pClientSocket, m_clientMap, chatList, m_sdb.get(), login, password);
-            sendToClient(QString::number(static_cast<quint8>(LoginAndSmsProtocol::login)),QString::number(static_cast<int>(status)), pClientSocket);
-            if(status == ServerError::Success)
-            {
-                sendToClient(QString::number(static_cast<quint8>(LoginAndSmsProtocol::sendChatList)), chatList, pClientSocket);
-                chatList.clear();
-            }
+            QString login, solt;
+            //QString password;
+            in >> login;
+            ServerError status = Login(pClientSocket, m_clientMap, /*chatList,*/ m_sdb.get(), login, solt);
+            qDebug()<<"Status"<<QString::number(static_cast<int>(status));
+            sendToClient(QString::number(static_cast<quint8>(LoginAndSmsProtocol::login)),QString::number(static_cast<int>(status)),solt,pClientSocket);
+//            if(status == ServerError::Success)
+//            {
+//                sendToClient(QString::number(static_cast<quint8>(LoginAndSmsProtocol::login)), solt, pClientSocket);
+//                chatList.clear();
+//            }
             break;
         }
         case LoginAndSmsProtocol::mes:
@@ -223,7 +225,7 @@ void MyServer::slotReadClient()
             }
             break;
         }
-	case LoginAndSmsProtocol::requestMessage:
+        case LoginAndSmsProtocol::requestMessage:
         {
             const QString whosend = m_clientMap.key(pClientSocket);
             m_sdb->ChatList(m_clientMap, chatList);
@@ -258,6 +260,21 @@ void MyServer::slotReadClient()
             }
             //qDebug()<<"name"<<name<<tmp.message<<"time"<<tmp.data<<"direction"<<tmp.direction;
             sendToClient(QString::number(static_cast<quint8>(LoginAndSmsProtocol::answerMessage)),whosend, mesList, m_clientMap.value(name));
+            break;
+        }
+        case LoginAndSmsProtocol::loginAndPassword:
+        {
+            QString login;
+            QString password;
+            in >> login>>password;
+            ServerError status = LoginAndPassword( pClientSocket, m_clientMap, chatList, m_sdb.get(), login, password);
+            sendToClient(QString::number(static_cast<quint8>(LoginAndSmsProtocol::loginAndPassword)),QString::number(static_cast<int>(status)), pClientSocket);
+            if(status == ServerError::Success)
+            {
+                sendToClient(QString::number(static_cast<quint8>(LoginAndSmsProtocol::sendChatList)), chatList, pClientSocket);
+                chatList.clear();
+                qDebug() << "chatlist send!";
+            }
             break;
         }
         default:

@@ -72,6 +72,7 @@
             TextField {
                     id: pswField
                     objectName: "pswField"
+                    echoMode: TextInput.Password
                     anchors.horizontalCenter: parent.horizontalCenter
                     Material.accent: "#B0BEC5"
                     placeholderText: "Введите пароль"

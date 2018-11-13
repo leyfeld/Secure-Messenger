@@ -4,7 +4,7 @@
 
 
 ServerError Registration(QSslSocket* pClientSocket, QMap <QString, QAbstractSocket*>& m_clientMap, QVector<ClientList> &chatList,
-                                ServDb* m_sdb, QString& login, QString& name, QString& password)
+                                ServDb* m_sdb, QString& login, QString& name, QString& password, QString& solt)
 {
     if((login.isNull())||(name.isNull())||(password.isNull()))
     {
@@ -18,25 +18,25 @@ ServerError Registration(QSslSocket* pClientSocket, QMap <QString, QAbstractSock
     {
         return ServerError::NameInDbError;
     }
-    m_sdb->ServInsert(login, name, password);
+    m_sdb->ServInsert(login, name, password, solt);
     m_clientMap.insert(login, pClientSocket);
     m_sdb->ChatList(m_clientMap, chatList);
     return ServerError::Success;
 }
 
 ServerError Login(QSslSocket* pClientSocket, QMap<QString, QAbstractSocket *> &m_clientMap,
-                                QVector<ClientList> &chatList,
-                                ServDb* m_sdb, QString& login, QString& password)
+//                                QVector<ClientList> &chatList,
+                                ServDb* m_sdb, QString& login, QString& solt)
 {
-    if((login.isNull())||(password.isNull()))
+    if(login.isNull()/*||(password.isNull())*/)
     {
         return ServerError::IncorrectProtocol;
     }
-    if((login.isEmpty())||(password.isEmpty()))
+    if(login.isEmpty()/*||(password.isEmpty())*/)
     {
         return ServerError::IncorrectLogin;
     }
-    if(!m_sdb->LoginCheck(login, password))
+    if(!m_sdb->LoginCheck(login, solt))
     {
         return (ServerError::IncorrectLogin);
     }
@@ -44,8 +44,39 @@ ServerError Login(QSslSocket* pClientSocket, QMap<QString, QAbstractSocket *> &m
     {
         return (ServerError::LoginExists);
     }
+    //m_clientMap.insert(login, pClientSocket);
+    //m_sdb->ChatList(m_clientMap, chatList);
+    return (ServerError::Success);
+}
+
+ServerError LoginAndPassword(QSslSocket* pClientSocket, QMap <QString, QAbstractSocket*>& m_clientMap, QVector<ClientList>& chatList,
+                             ServDb* m_sdb, QString& login, QString& password)
+{
+    if((login.isNull())||(password.isNull()))
+    {
+        return ServerError::IncorrectProtocol;
+    }
+    if((login.isEmpty())||(password.isEmpty()))
+    {
+         if(m_clientMap.contains(login))
+         {
+             m_clientMap.remove(login);
+         }
+        return ServerError::IncorrectLogin;
+    }
+    if(!m_sdb->LoginAndPasswordCheck(login, password))
+    {
+        if(m_clientMap.contains(login))
+        {
+            m_clientMap.remove(login);
+        }
+        return (ServerError::IncorrectLogin);
+    }
+//    if(m_clientMap.contains(login))
+//    {
+//        return (ServerError::LoginExists);
+//    }
     m_clientMap.insert(login, pClientSocket);
     m_sdb->ChatList(m_clientMap, chatList);
     return (ServerError::Success);
 }
-

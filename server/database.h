@@ -18,9 +18,10 @@ class ServDb
 public:
     ServDb(const QString& dbName);
     void createConnection();
-    void ServInsert(const QString &login, const QString &name, const QString &hashPassword);
+    void ServInsert(const QString &login, const QString &name, const QString &hashPassword, const QString &solt);
     bool IsHasClient(const QString& name);
-    bool LoginCheck(const QString& login, const QString& password);
+    bool LoginCheck(const QString& login, QString& solt);
+    bool LoginAndPasswordCheck(const QString& login, const QString& password);
     void ChatList(const QMap<QString, QAbstractSocket *> &serverMap, QVector<ClientList>& chatList);
     ~ServDb();
 private:

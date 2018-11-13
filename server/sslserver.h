@@ -15,7 +15,6 @@ public:
 public slots:
     void slotError(QAbstractSocket::SocketError error);
     void slotSslErrors(const QList<QSslError> & errors);
-
 signals:
     void SigReady();
 protected:
