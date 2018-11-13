@@ -17,12 +17,13 @@
 #include <QDataStream>
 #include <QTcpServer>
 #include <QSslSocket>
+#include <QCoreApplication>
 
 
 
 MyServer::MyServer(int nPort, QWidget* pwgt /*=0*/) : QWidget(pwgt), m_nNextBlockSize(0)
 {
-    QString dbPath = QDir::currentPath() + "/server.db";
+    QString dbPath = QCoreApplication::applicationDirPath() + "/server.db";
     qDebug() << "Current Server Db path: " << dbPath;
     m_sdb.reset(new ServDb(dbPath));
     m_socketServer = new SslServer(this);

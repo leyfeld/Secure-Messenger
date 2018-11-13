@@ -15,6 +15,7 @@
 #include <QThreadPool>
 #include <QMutexLocker>
 #include <QVariant>
+#include <QCoreApplication>
 
 ChatProtocol::ChatProtocol()
     : m_nNextBlockSize(0)
@@ -140,7 +141,7 @@ void ChatProtocol::WriteAndReadFile(const QString &whosend, const QVariant &data
         endOrNext = val.value("ISEND").toString();
     }
     QString new_dir = QFileInfo(filename).fileName();
-    filename = QDir::currentPath() + "/" + new_dir;
+    filename = QCoreApplication::applicationDirPath() + "/" + new_dir;
     if(size > 0)
     {
         QFile file(filename);

@@ -1,7 +1,3 @@
-! include( ../project_config.pri ) {
-    error( "Couldn't find the project_config.pri file!" )
-}
-
 QT += core
 QT += network
 QT += quick quickcontrols2
@@ -47,7 +43,7 @@ HEADERS += \
     threadsend.h \
     cryptoworker.h\
     securepassword.h
-LIBS += -L$$OUT_PWD/../openssl1.0.2p/lib -lssl -lcrypto
+LIBS += -L$$PWD/../openssl1.0.2p/lib -lssl -lcrypto
 INCLUDEPATH += ../openssl1.0.2p/include/
 LIBS += -lcommon -L$$OUT_PWD/../libs/
 message($$OUT_PWD);

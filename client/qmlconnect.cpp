@@ -7,6 +7,7 @@
 #include <QThread>
 #include <QVariant>
 #include <QVector>
+#include <QCoreApplication>
 
 qmlConnect::qmlConnect() : client(new ChatProtocol())
 {
@@ -320,7 +321,7 @@ void qmlConnect::slotAnswerReturnMessage(const QString& login, QList <QVariant> 
 }
 void qmlConnect::OpenClientDB ()
 {
-    QString dbPath = QDir::currentPath() + "/dbClient"+myLogin+".db";
+    QString dbPath = QCoreApplication::applicationDirPath() + "/dbClient"+myLogin+".db";
     qDebug() << "Current Server Db path: " << dbPath;
     dbClient.reset(new database(dbPath));
     dbClient->CreateConnection();
@@ -367,11 +368,6 @@ bool qmlConnect::IsLogStatusOk(const QString & login, const QString& passw)
     if (passw.length()>20)
     {
         txtError->setProperty("text","Пароль слишком длинный!");
-        return false;
-    }
-    if(IsForbidSign(passw))
-    {
-        txtError->setProperty("text","Присутствуют запрещенные символы");
         return false;
     }
 

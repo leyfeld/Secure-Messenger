@@ -1,6 +1,3 @@
-! include( ../project_config.pri ) {
-    error( "Couldn't find the project_config.pri file!" )
-}
 
 #-------------------------------------------------
 #

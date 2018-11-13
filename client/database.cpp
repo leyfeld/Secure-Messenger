@@ -197,6 +197,7 @@ QString database::GetSolt(const QString& login)
 
 database::~database()
 {
+
     QSqlDatabase db;
     if (!QSqlDatabase::contains(cnDbSendMessage))
     {
