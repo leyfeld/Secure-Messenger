@@ -30,6 +30,7 @@ private:
     template <typename T>
     void sendToClient(const QString& str2, const T& str, QAbstractSocket* pSocket);
     void sendToClient(const QString& protocol, const QString& whosend , const QVariant& msgData, QAbstractSocket *pSocket);
+    void sendToClient(const QString& protocol, const QString& whosend , const QVariant& msgData, const QVariant& dTime, QAbstractSocket *pSocket);
     void sendToClient(const QString& protocol, const QString& whosend , const QString& mes, const QDateTime& dateTime,
                       const QString& dir, QAbstractSocket *pSocket);
     void sendToClient(const QString& str2, QAbstractSocket* pSocket);

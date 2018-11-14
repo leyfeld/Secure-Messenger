@@ -73,12 +73,12 @@ void ChatProtocol::SendLoginAndPasswordToServer(const QString& login, const QStr
     qDebug() <<"SendLoginAndPasswordToServer: ";
     Send(LoginAndSmsProtocol::loginAndPassword, {login, password});
 }
-void ChatProtocol::SendMessageToClient(const QString &name,const QString &sms)
+void ChatProtocol::SendMessageToClient(const QString &name,const QString &sms, const QDateTime &time)
 {
     qDebug() <<"SendMessageToClient: ";
     QByteArray encsms;
     m_crypto->Encrypt(name, sms, encsms);
-    Send(LoginAndSmsProtocol::mes, {name, encsms});
+    Send(LoginAndSmsProtocol::mes, {name, encsms, time});
 }
 void ChatProtocol::SendRefreshChatList()
 {
@@ -269,16 +269,17 @@ void ChatProtocol::slotReadyRead()
             }
             case LoginAndSmsProtocol::mes:
             {
-                QVariant message;
+                QVariant message, dTime;
                 QString whosend;
-                in>>whosend>>message;
+                in>>whosend>>message>>dTime;
                 QByteArray mes = message.toByteArray();
                 QString decmes;
+                QDateTime dtTime=dTime.toDateTime();
                 qDebug()<<"encrypted message"<<mes;
                 m_crypto->Decrypt(whosend,mes,decmes);
 
                 qDebug()<<"Decrypted message"<<decmes;
-                emit SigGetMessage(whosend, decmes, time);
+                emit SigGetMessage(whosend, decmes, dtTime);
                 break;
             }
             case LoginAndSmsProtocol::sendFile:

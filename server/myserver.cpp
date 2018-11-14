@@ -141,7 +141,8 @@ void MyServer::slotReadClient()
         {
             QString login;
             QByteArray str;
-            in >>login >> str;
+            QVariant dtTime;
+            in >>login >> str>>dtTime;
             QVariant mes(str);
             QString strMessage = time.toString() + " " + "Client has sended - " + str;
             m_ptxt->append(strMessage);
@@ -151,7 +152,7 @@ void MyServer::slotReadClient()
                 break;
             }
             const QString whosend = m_clientMap.key(pClientSocket);
-            sendToClient(QString::number(static_cast<quint8>(LoginAndSmsProtocol::mes)), whosend , mes, m_clientMap.value(login));
+            sendToClient(QString::number(static_cast<quint8>(LoginAndSmsProtocol::mes)), whosend , mes , dtTime, m_clientMap.value(login));
             break;
         }
         case LoginAndSmsProtocol::sendChatList:
@@ -306,6 +307,19 @@ void MyServer::sendToClient(const QString& protocol,const QString& whosend ,cons
     QDataStream out(&arrBlock, QIODevice::WriteOnly);
     out.setVersion(QDataStream::Qt_4_2);
     out << quint16(0) << QDateTime::currentDateTime() << protocol << whosend << msgData;
+
+    out.device()->seek(0);
+    out << quint16(arrBlock.size() - sizeof(quint16));
+    qDebug()<<"send arrblock from server: "<< arrBlock.size();
+    pSocket->write(arrBlock);
+}
+
+void MyServer::sendToClient(const QString& protocol,const QString& whosend ,const QVariant& msgData, const QVariant& dTime, QAbstractSocket* pSocket)
+{
+    QByteArray  arrBlock;
+    QDataStream out(&arrBlock, QIODevice::WriteOnly);
+    out.setVersion(QDataStream::Qt_4_2);
+    out << quint16(0) << QDateTime::currentDateTime() << protocol << whosend << msgData<< dTime;
 
     out.device()->seek(0);
     out << quint16(arrBlock.size() - sizeof(quint16));

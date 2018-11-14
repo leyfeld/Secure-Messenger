@@ -23,7 +23,7 @@ public:
     void SendLoginToServer(const QString& login);
     void SendRefreshChatList();
     void SendLoginAndPasswordToServer(const QString& login, const QString& password);
-    void SendMessageToClient(const QString &name, const QString &sms);
+    void SendMessageToClient(const QString &name, const QString &sms, const QDateTime &time);
     void SendFile(const QString &login, const QVariant &data);
     void SendMessageRequest();
     void WriteAndReadFile(const QString &whosend, const QVariant &data, const QDateTime &time);
