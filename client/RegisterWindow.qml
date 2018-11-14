@@ -17,6 +17,33 @@ Item {
             ldid.source= "MainWindow.qml"
         }
     }
+    Image {
+        id: iReturn
+        anchors.left: parent.left
+        anchors.leftMargin: 50
+        anchors.top: parent.top
+        anchors.topMargin: 30
+        height:70
+        width:70
+        source: "pics/arrow_pic_2.png"
+        MouseArea{
+            id: maReturn
+            anchors.fill: parent
+            hoverEnabled: true
+            onClicked:
+            {
+                ldid.source= "EnterWindow.qml"
+            }
+            onEntered:
+            {
+                iReturn.source= "pics/arrow_pic_1.png"
+            }
+            onExited:
+            {
+                iReturn.source= "pics/arrow_pic_2.png"
+            }
+        }
+      }
     Column
     {
         id:mainColumn

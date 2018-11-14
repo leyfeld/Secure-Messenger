@@ -94,8 +94,6 @@
                       qmlConnection.enterForm()
                     }
 
-
-
                 }
             Text {
                 id: txReg

@@ -110,6 +110,7 @@ Item {
             onClicked: {
                 lmMessage.clear();
                 btnMessageList.text="Messages List"
+                iKey.visible=false
             }
         }
         Dialog{
@@ -143,8 +144,36 @@ Item {
             onClicked: {
                 bar.currentIndex=0
             }
+            Image{
+                id: iKey
+                source: "pics/key_pic_1.png"
+                width: Math.max((parent.height)*0.6)
+                height:Math.max((parent.height)*0.6)
+                anchors.verticalCenter: parent.verticalCenter
+                anchors.right:parent.right
+                anchors.rightMargin: 20
+                visible:false
+                MouseArea {
+                    id: maKey
+                    anchors.fill: parent
+                    hoverEnabled: true
+                    onClicked:
+                    {
+                        keyMessage.open()
+                        qmlConnection.getKey()
+                    }
+                    onEntered:
+                    {
+                        iKey.source="pics/key_pic_2.png"
+                    }
+                    onExited:
+                    {
+                        iKey.source= "pics/key_pic_1.png"
+                    }
+                }
+            }
         }
-    }
+     }
     StackLayout
     {
         anchors.top: bar.bottom
@@ -198,6 +227,7 @@ Item {
                             {
 
                                 bar.currentIndex=1;
+                                iKey.visible=true;
                                 btnMessageList.text=txtItem.text
                                 field1.readOnly=((txtItem.color=="#414037")? true : false)
                                 qmlConnection.messageList(txtItem.text)
@@ -408,33 +438,21 @@ Item {
                 onClicked: {
                     checkBox.checked = false
                     checkBox.visible = false
-                    qmlConnection.messageForm()
-                    lmMessage.append({txtMessage:field1.text,
+                    if(field1.text!="")
+                        lmMessage.append({txtMessage:field1.text, txtTime:new Date().toLocaleString(locale,"hh:mm ap\nddd MMMM d yy"),
                                          lmMessage:400})
+                    if(filename.text!="")
+                        lmMessage.append({txtMessage:filename.text, txtTime:new Date().toLocaleString(locale,"hh:mm ap\nddd MMMM d yy"),
+                                             lmMessage:400})
+                    qmlConnection.messageForm()
+
                     lvMessage.positionViewAtEnd()
                     field1.text = ""
                     filename.text = ""
                 }
+
             }
-            Button {
-                id: keybutton
-                x: 0
-                y: 0
-                height: 40
-                objectName: "keybutton"
-                text: qsTr("key")
-                anchors.left: parent.left
-                anchors.leftMargin: 598
-                Material.background: "#FFF59D"
-                anchors.right: parent.right
-                anchors.bottom: parent.bottom
-                anchors.bottomMargin: 434
-                anchors.rightMargin: 0
-                onClicked: {
-                    keyMessage.open()
-                    qmlConnection.getKey()
-                }
-            }
+
             Dialog  {
                 id: keyMessage
                 width: 300
@@ -489,20 +507,8 @@ Item {
             //topPadding: 50
         }
     }
+        }
+    }
 
-    Menu {
-        id: contextMenu
-        MenuItem {
-            text: "Copy"
-            //shortcut: "Ctrl+C"
-            onTriggered:
-                teTmp.copy()
-        }
-//        MenuItem {
-//            text: "Paste"
-//            //shortcut: "Ctrl+V"
-//            onTriggered: txtIMessage.paste()
-//        }
-        }
-     }
-}}
+
+}

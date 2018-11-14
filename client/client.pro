@@ -43,7 +43,12 @@ HEADERS += \
     threadsend.h \
     cryptoworker.h\
     securepassword.h
+#ifdef _WIN32
+#LIBS += -L$$PWD/openssl1.0.2p/lib -lssleay32 -llibeay32
+#endif
+
 LIBS += -L$$PWD/../openssl1.0.2p/lib -lssl -lcrypto
+
 INCLUDEPATH += ../openssl1.0.2p/include/
 LIBS += -lcommon -L$$OUT_PWD/../libs/
 message($$OUT_PWD);
