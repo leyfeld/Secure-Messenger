@@ -35,25 +35,25 @@ Item {
         target: qmlConnection;
         onToChatList:{
 
-            listModel.append({itemText:log, clrItem:(offOn==true)? "#FFC107" : "#414037"})
+                listModel.append({itemText:log, clrItem:(offOn==true)? "#FFC107" : "#414037"})
 
-        }
-        onToMessageList:
-        {
-            lmMessage.append({txtMessage:mes,
-                                 lmMessage:20})
-            lvMessage.positionViewAtEnd()
-        }
-        onToPrevMessageList:{
-            lmMessage.append({txtMessage:mes,
-                                 lmMessage:(direction=="to")? 400 : 20})
-            lvMessage.positionViewAtEnd()
-        }
-        onToGetFile :
-        {
-            //console.log("emit file sig")
-            fDialog.open()
-        }
+            }
+            onToMessageList:
+            {
+                lmMessage.append({txtMessage:mes,txtTime:time,
+                                     lmMessage:20})
+                lvMessage.positionViewAtEnd()
+            }
+            onToPrevMessageList:{
+                lmMessage.append({txtMessage:mes,txtTime:time,
+                                     lmMessage:(direction=="to")? 400 : 20})
+                lvMessage.positionViewAtEnd()
+            }
+            onToGetFile :
+            {
+                //console.log("emit file sig")
+                fDialog.open()
+            }
     }
 
     Component {
@@ -143,8 +143,36 @@ Item {
             onClicked: {
                 bar.currentIndex=0
             }
+            Image{
+                id: iKey
+                source: "pics/key_pic_1.png"
+                width: Math.max((parent.height)*0.6)
+                height:Math.max((parent.height)*0.6)
+                anchors.verticalCenter: parent.verticalCenter
+                anchors.right:parent.right
+                anchors.rightMargin: 20
+                visible:false
+                MouseArea {
+                    id: maKey
+                    anchors.fill: parent
+                    hoverEnabled: true
+                    onClicked:
+                    {
+                        keyMessage.open()
+                        qmlConnection.getKey()
+                    }
+                    onEntered:
+                    {
+                        iKey.source="pics/key_pic_2.png"
+                    }
+                    onExited:
+                    {
+                        iKey.source= "pics/key_pic_1.png"
+                    }
+                }
+            }
         }
-    }
+     }
     StackLayout
     {
         anchors.top: bar.bottom
@@ -198,7 +226,9 @@ Item {
                             {
 
                                 bar.currentIndex=1;
+                                iKey.visible=true;
                                 btnMessageList.text=txtItem.text
+                                field1.readOnly=((txtItem.color=="#414037")? true : false)
                                 qmlConnection.messageList(txtItem.text)
 
                             }
@@ -207,6 +237,7 @@ Item {
                                 clientListView.currentIndex=index
                             }
 
+            
 
                         }
 
@@ -246,7 +277,7 @@ Item {
                         objectName: "iMessage"
                         anchors.left: parent.left
                         anchors.right: parent.right
-                        height: Math.max(txtIMessage.contentHeight * 1.5)
+                        height: Math.max((txtIMessage.contentHeight+txtITime.contentHeight) * 1.5)
                         //clip:true
                         Rectangle{
                             anchors.left: parent.left;
@@ -268,7 +299,7 @@ Item {
                                 font.underline: false
                                 font.bold: false
                                 font.pixelSize: 16
-                                topPadding: Math.max((parent.height-contentHeight)/2)
+                                topPadding: Math.max((parent.height-contentHeight-txtITime.contentHeight)/2)
                                 leftPadding: 10
                                 selectByMouse:true
                                 selectionColor: "#9E9E9E"
@@ -278,11 +309,25 @@ Item {
                                             txtIMessage.copy()
                                     }
                             }
+			Text{
+                        id:txtITime
+                        width: txtIMessage.width
+                        anchors.top:txtIMessage.bottom
+                        wrapMode: Text.Wrap
+                        color: "#9E9E9E"
+                        text: txtTime
+                        font.underline: false
+                        font.bold: false
+                        font.pixelSize: 12
+                        leftPadding: 10
                         }
                     }
+                    }
+                  }
+             }
 
-                }
-            }
+                
+            
 
             ScrollView {
                 id: svText
@@ -392,33 +437,20 @@ Item {
                 onClicked: {
                     checkBox.checked = false
                     checkBox.visible = false
-                    qmlConnection.messageForm()
-                    lmMessage.append({txtMessage:field1.text,
+                    if(field1.text!="")
+                        lmMessage.append({txtMessage:field1.text, txtTime:new Date().toLocaleString(locale,"hh:mm ap\nddd MMMM d yy"),
                                          lmMessage:400})
+                    if(filename.text!="")
+                        lmMessage.append({txtMessage:filename.text, txtTime:new Date().toLocaleString(locale,"hh:mm ap\nddd MMMM d yy"),
+                                             lmMessage:400})
+                    qmlConnection.messageForm()
+
                     lvMessage.positionViewAtEnd()
                     field1.text = ""
                     filename.text = ""
                 }
             }
-            Button {
-                id: keybutton
-                x: 8
-                y: 392
-                height: 29
-                objectName: "keybutton"
-                text: qsTr("key")
-                anchors.left: parent.left
-                anchors.leftMargin: 8
-                Material.background: "#FFF59D"
-                anchors.right: parent.right
-                anchors.bottom: parent.bottom
-                anchors.bottomMargin: 19
-                anchors.rightMargin: 602
-                onClicked: {
-                    keyMessage.open()
-                    qmlConnection.getKey()
-                }
-            }
+
             Dialog  {
                 id: keyMessage
                 width: 300
@@ -427,7 +459,7 @@ Item {
                 standardButtons: MessageDialog.Ok
                 Label {
                     id: keyLabel
-                    color: "#000000"
+                    color: "#34aadc"
                     text: qsTr("If you see this key on two devices, end-to-end encryption is guaranteed!")
                     anchors.top: parent.top
                     height: parent.height
@@ -445,14 +477,12 @@ Item {
                     height: parent.height
                     width: parent.width
                     wrapMode: TextEdit.WrapAtWordBoundaryOrAnywhere
-                    color: "#000000"
+                    color: "white"
                     verticalAlignment: Text.AlignVCenter
 
                 }
 
         }
-        }
-    }
     Rectangle{
         id: rctError
         objectName: "rctError"
@@ -475,20 +505,8 @@ Item {
             //topPadding: 50
         }
     }
-
-    Menu {
-        id: contextMenu
-        MenuItem {
-            text: "Copy"
-            //shortcut: "Ctrl+C"
-            onTriggered:
-                teTmp.copy()
         }
-//        MenuItem {
-//            text: "Paste"
-//            //shortcut: "Ctrl+V"
-//            onTriggered: txtIMessage.paste()
-//        }
     }
-}
 
+
+}

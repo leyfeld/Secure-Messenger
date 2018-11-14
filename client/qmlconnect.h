@@ -34,13 +34,14 @@ private:
     std::unique_ptr <database> dbClient;
     bool IsConnected=false;
     bool IsSendLogin=false;
+    bool registration = false;
 public: 
     qmlConnect();
     QVector <Messagelist> mesList;
     void SetRootObj (QObject* RObject=nullptr);
     void OpenClientDB();
     void CreateConnection(const QString &ip);
-    bool IsLogStatusOk (const QString&);
+    bool IsLogStatusOk (const QString&, const QString &passw);
     bool IsForbidSign(const QString &);
 
 
@@ -73,6 +74,7 @@ public slots:
    void slotServerConnected();
    void slotReturnMessage(const QString &login);
    void slotAnswerReturnMessage(const QString& login, QList <QVariant> RetMessage);
+   void slotClientConnected();
 protected:
    QObject *viewer;
 

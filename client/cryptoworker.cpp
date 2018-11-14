@@ -52,7 +52,6 @@ int CryptoWorker::Decrypt(const QString& login, const QByteArray &encstring, QSt
     std::unique_ptr<EVP_CIPHER_CTX, void(*)(EVP_CIPHER_CTX *)> ctx(EVP_CIPHER_CTX_new(), EVP_CIPHER_CTX_free);
     int len=0;
     int plaintext_len=0;
-    qDebug()<<"EncryptedString in Decrypt"<<encstring;
     if(ctx.get() == nullptr )
     {
         handleErrors();
@@ -65,27 +64,19 @@ int CryptoWorker::Decrypt(const QString& login, const QByteArray &encstring, QSt
     }
     QByteArray tempArray(encstring.size()+127,'\0');
     unsigned char* plaintext = reinterpret_cast <unsigned char*>(tempArray.data());
-    plaintext[0]='n';
-    qDebug()<<"Plain text"<<plaintext[0];
     const unsigned char* ciphertext = reinterpret_cast <const unsigned char* > (encstring.data());
-    qDebug()<<"Cipher text"<<ciphertext[0];
     if(1 != EVP_DecryptUpdate(ctx.get(), plaintext, &len, ciphertext, encstring.size()))
     {
         handleErrors();
     }
-    qDebug()<<"Plain text after 1"<<plaintext[0];
     plaintext_len = len;
     if(1 != EVP_DecryptFinal_ex(ctx.get(), plaintext + len, &len))
     {
         handleErrors();
     }
-    qDebug()<<"Plain text after 2"<<plaintext[0];
     plaintext_len += len;
-    qDebug()<<"Temp Array"<<tempArray;
     tempArray.resize(plaintext_len);
-    qDebug()<<"Temp Array"<<tempArray;
     decrtext = QString::fromUtf8(tempArray);
-
     return plaintext_len;
 }
 

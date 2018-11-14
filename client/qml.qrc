@@ -12,5 +12,9 @@
         <file alias="duck_1.png">pics/duck_1.png</file>
         <file alias="Refresh_pic_1.png">pics/Refresh_pic_1.png</file>
         <file alias="Refresh_pic_2.png">pics/Refresh_pic_2.png</file>
+        <file alias="key_pic_1.png">pics/key_pic_1.png</file>
+        <file alias="key_pic_2.png">pics/key_pic_2.png</file>
+        <file alias="arrow_pic_1.png">pics/arrow_pic_1.png</file>
+        <file alias="arrow_pic_2.png">pics/arrow_pic_2.png</file>
     </qresource>
 </RCC>

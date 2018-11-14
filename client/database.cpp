@@ -192,12 +192,12 @@ QString database::GetSolt(const QString& login)
         query.finish();
         return str;
     }
-    //query.finish();
     return "Solt not exist";
 }
 
 database::~database()
 {
+
     QSqlDatabase db;
     if (!QSqlDatabase::contains(cnDbSendMessage))
     {

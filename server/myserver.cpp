@@ -17,12 +17,13 @@
 #include <QDataStream>
 #include <QTcpServer>
 #include <QSslSocket>
+#include <QCoreApplication>
 
 
 
 MyServer::MyServer(int nPort, QWidget* pwgt /*=0*/) : QWidget(pwgt), m_nNextBlockSize(0)
 {
-    QString dbPath = QDir::currentPath() + "/server.db";
+    QString dbPath = QCoreApplication::applicationDirPath() + "/server.db";
     qDebug() << "Current Server Db path: " << dbPath;
     m_sdb.reset(new ServDb(dbPath));
     m_socketServer = new SslServer(this);
@@ -52,7 +53,7 @@ MyServer::MyServer(int nPort, QWidget* pwgt /*=0*/) : QWidget(pwgt), m_nNextBloc
     connect(pClientSocket, SIGNAL(disconnected()), this, SLOT(slotDeleteMap()));
     connect(pClientSocket, SIGNAL(disconnected()), pClientSocket, SLOT(deleteLater()));
     connect(pClientSocket, SIGNAL(readyRead()), this, SLOT(slotReadClient()));
-    connect(pClientSocket, SIGNAL(SigNameDelete(cosnt QString&)), this, SLOT(slotSendSig(const QString&)));
+//    connect(this, SIGNAL(SigNameDelete(cosnt QString&)), this, SLOT(slotSendSig(const QString&)));
 
 
     qDebug()<<"slotnewconnection!";
@@ -63,7 +64,7 @@ void MyServer::slotDeleteMap()
    QString nameClient = m_clientMap.key(pClientSocket);
    m_clientMap.remove(nameClient);
    m_clientKey.remove(nameClient);
-   emit SigNameDelete(nameClient);
+   slotSendSig(nameClient);
 }
 
 void MyServer::slotEncryptedReady()
@@ -140,7 +141,8 @@ void MyServer::slotReadClient()
         {
             QString login;
             QByteArray str;
-            in >>login >> str;
+            QVariant dtTime;
+            in >>login >> str>>dtTime;
             QVariant mes(str);
             QString strMessage = time.toString() + " " + "Client has sended - " + str;
             m_ptxt->append(strMessage);
@@ -150,7 +152,7 @@ void MyServer::slotReadClient()
                 break;
             }
             const QString whosend = m_clientMap.key(pClientSocket);
-            sendToClient(QString::number(static_cast<quint8>(LoginAndSmsProtocol::mes)), whosend , mes, m_clientMap.value(login));
+            sendToClient(QString::number(static_cast<quint8>(LoginAndSmsProtocol::mes)), whosend , mes , dtTime, m_clientMap.value(login));
             break;
         }
         case LoginAndSmsProtocol::sendChatList:
@@ -225,7 +227,7 @@ void MyServer::slotReadClient()
             }
             break;
         }
-	case LoginAndSmsProtocol::requestMessage:
+        case LoginAndSmsProtocol::requestMessage:
         {
             const QString whosend = m_clientMap.key(pClientSocket);
             m_sdb->ChatList(m_clientMap, chatList);
@@ -267,12 +269,13 @@ void MyServer::slotReadClient()
             QString login;
             QString password;
             in >> login>>password;
-            ServerError status = LoginAndPassword( m_clientMap, chatList, m_sdb.get(), login, password);
+            ServerError status = LoginAndPassword( pClientSocket, m_clientMap, chatList, m_sdb.get(), login, password);
             sendToClient(QString::number(static_cast<quint8>(LoginAndSmsProtocol::loginAndPassword)),QString::number(static_cast<int>(status)), pClientSocket);
             if(status == ServerError::Success)
             {
                 sendToClient(QString::number(static_cast<quint8>(LoginAndSmsProtocol::sendChatList)), chatList, pClientSocket);
                 chatList.clear();
+                qDebug() << "chatlist send!";
             }
             break;
         }
@@ -304,6 +307,19 @@ void MyServer::sendToClient(const QString& protocol,const QString& whosend ,cons
     QDataStream out(&arrBlock, QIODevice::WriteOnly);
     out.setVersion(QDataStream::Qt_4_2);
     out << quint16(0) << QDateTime::currentDateTime() << protocol << whosend << msgData;
+
+    out.device()->seek(0);
+    out << quint16(arrBlock.size() - sizeof(quint16));
+    qDebug()<<"send arrblock from server: "<< arrBlock.size();
+    pSocket->write(arrBlock);
+}
+
+void MyServer::sendToClient(const QString& protocol,const QString& whosend ,const QVariant& msgData, const QVariant& dTime, QAbstractSocket* pSocket)
+{
+    QByteArray  arrBlock;
+    QDataStream out(&arrBlock, QIODevice::WriteOnly);
+    out.setVersion(QDataStream::Qt_4_2);
+    out << quint16(0) << QDateTime::currentDateTime() << protocol << whosend << msgData<< dTime;
 
     out.device()->seek(0);
     out << quint16(arrBlock.size() - sizeof(quint16));

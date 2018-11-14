@@ -1,7 +1,3 @@
-! include( ../project_config.pri ) {
-    error( "Couldn't find the project_config.pri file!" )
-}
-
 QT += core
 QT += network
 QT += quick quickcontrols2
@@ -47,9 +43,14 @@ HEADERS += \
     threadsend.h \
     cryptoworker.h\
     securepassword.h
-LIBS += -L$$OUT_PWD/../openssl1.0.2p/lib -lssleay32 -llibeay32
+#ifdef _WIN32
+LIBS += -L$$PWD/openssl1.0.2p/lib -lssleay32 -llibeay32
+message($$PWD/../openssl1.0.2p);
+#endif
+##ifdef _APPLE_
+#LIBS += -L$$PWD/../openssl1.0.2p/lib -lssl -lcrypto
+##endif
 INCLUDEPATH += ../openssl1.0.2p/include/
 LIBS += -lcommon -L$$OUT_PWD/../libs/
-LIBS += -L$$OUT_PWD/../openssl1.0.2p/lib/ssleay32.lib
-message($$OUT_PWD);
+message($$PWD);
 INCLUDEPATH += ../common

@@ -15,6 +15,7 @@
 #include <QThreadPool>
 #include <QMutexLocker>
 #include <QVariant>
+#include <QCoreApplication>
 
 ChatProtocol::ChatProtocol()
     : m_nNextBlockSize(0)
@@ -72,12 +73,12 @@ void ChatProtocol::SendLoginAndPasswordToServer(const QString& login, const QStr
     qDebug() <<"SendLoginAndPasswordToServer: ";
     Send(LoginAndSmsProtocol::loginAndPassword, {login, password});
 }
-void ChatProtocol::SendMessageToClient(const QString &name,const QString &sms)
+void ChatProtocol::SendMessageToClient(const QString &name,const QString &sms, const QDateTime &time)
 {
     qDebug() <<"SendMessageToClient: ";
     QByteArray encsms;
     m_crypto->Encrypt(name, sms, encsms);
-    Send(LoginAndSmsProtocol::mes, {name, encsms});
+    Send(LoginAndSmsProtocol::mes, {name, encsms, time});
 }
 void ChatProtocol::SendRefreshChatList()
 {
@@ -104,6 +105,12 @@ void ChatProtocol::ReturnMessage(const QString &loginSentTo, const QList <QVaria
 const QString ChatProtocol::GetSKey(const QString &login)
 {
     QByteArray key =  m_crypto->GetKey(login);
+    if(key.isEmpty())
+    {
+        QByteArray nkey(32,'\0');
+        QString skey = nkey.toHex();
+        return skey;
+    }
     key.resize(32);
     QString skey = key.toHex();
     return skey;
@@ -134,7 +141,7 @@ void ChatProtocol::WriteAndReadFile(const QString &whosend, const QVariant &data
         endOrNext = val.value("ISEND").toString();
     }
     QString new_dir = QFileInfo(filename).fileName();
-    filename = QDir::currentPath() + "/" + new_dir;
+    filename = QCoreApplication::applicationDirPath() + "/" + new_dir;
     if(size > 0)
     {
         QFile file(filename);
@@ -208,6 +215,7 @@ void ChatProtocol::slotReadyRead()
                 in >> serAnswer;
                 if(static_cast<ServerError>(serAnswer.toUInt()) ==  ServerError::Success)
                 {
+                    emit SigSuccess();
                     m_crypto.reset(new CryptoWorker());
                     pubKey = m_crypto->GetPublicKey();
                     SendPublicKey(pubKey);
@@ -225,13 +233,13 @@ void ChatProtocol::slotReadyRead()
                 qDebug()<<"Solt:"<<solt;
                 if(static_cast<ServerError>(serAnswer.toUInt()) ==  ServerError::Success)
                 {
+                    qDebug()<<"sig SigSendLoginAndPassword";
                     emit SigSendLoginAndPassword(solt);
 //                    m_crypto.reset(new CryptoWorker());
 //                    pubKey = m_crypto->GetPublicKey();
 //                    SendPublicKey(pubKey);
                 }
                 else
-                //qDebug() <<"LoginAndSmsProtocol::login: ";
                 emit SigAnswerLogin(static_cast<ServerError>(serAnswer.toUInt()));
                 break;
             }
@@ -241,6 +249,7 @@ void ChatProtocol::slotReadyRead()
             in >> serAnswer;
             if(static_cast<ServerError>(serAnswer.toUInt()) ==  ServerError::Success)
             {
+                    emit SigSuccess();
                     m_crypto.reset(new CryptoWorker());
                     pubKey = m_crypto->GetPublicKey();
                     SendPublicKey(pubKey);
@@ -260,16 +269,17 @@ void ChatProtocol::slotReadyRead()
             }
             case LoginAndSmsProtocol::mes:
             {
-                QVariant message;
+                QVariant message, dTime;
                 QString whosend;
-                in>>whosend>>message;
+                in>>whosend>>message>>dTime;
                 QByteArray mes = message.toByteArray();
                 QString decmes;
+                QDateTime dtTime=dTime.toDateTime();
                 qDebug()<<"encrypted message"<<mes;
                 m_crypto->Decrypt(whosend,mes,decmes);
 
                 qDebug()<<"Decrypted message"<<decmes;
-                emit SigGetMessage(whosend, decmes, time);
+                emit SigGetMessage(whosend, decmes, dtTime);
                 break;
             }
             case LoginAndSmsProtocol::sendFile:

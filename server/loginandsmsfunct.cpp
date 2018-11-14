@@ -44,12 +44,12 @@ ServerError Login(QSslSocket* pClientSocket, QMap<QString, QAbstractSocket *> &m
     {
         return (ServerError::LoginExists);
     }
-    m_clientMap.insert(login, pClientSocket);
+    //m_clientMap.insert(login, pClientSocket);
     //m_sdb->ChatList(m_clientMap, chatList);
     return (ServerError::Success);
 }
 
-ServerError LoginAndPassword(/*QSslSocket* pClientSocket,*/ QMap <QString, QAbstractSocket*>& m_clientMap, QVector<ClientList>& chatList,
+ServerError LoginAndPassword(QSslSocket* pClientSocket, QMap <QString, QAbstractSocket*>& m_clientMap, QVector<ClientList>& chatList,
                              ServDb* m_sdb, QString& login, QString& password)
 {
     if((login.isNull())||(password.isNull()))
@@ -58,17 +58,25 @@ ServerError LoginAndPassword(/*QSslSocket* pClientSocket,*/ QMap <QString, QAbst
     }
     if((login.isEmpty())||(password.isEmpty()))
     {
+         if(m_clientMap.contains(login))
+         {
+             m_clientMap.remove(login);
+         }
         return ServerError::IncorrectLogin;
     }
     if(!m_sdb->LoginAndPasswordCheck(login, password))
     {
+        if(m_clientMap.contains(login))
+        {
+            m_clientMap.remove(login);
+        }
         return (ServerError::IncorrectLogin);
     }
 //    if(m_clientMap.contains(login))
 //    {
 //        return (ServerError::LoginExists);
 //    }
-    //m_clientMap.insert(login, pClientSocket);
+    m_clientMap.insert(login, pClientSocket);
     m_sdb->ChatList(m_clientMap, chatList);
     return (ServerError::Success);
 }
