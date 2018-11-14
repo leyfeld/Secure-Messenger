@@ -43,6 +43,7 @@ public:
     void CreateConnection(const QString &ip);
     bool IsLogStatusOk (const QString&, const QString &passw);
     bool IsForbidSign(const QString &);
+    bool IsNameStatusOk(const QString & login);
 
 
 signals:

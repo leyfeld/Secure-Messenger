@@ -45,7 +45,7 @@ void qmlConnect::slotClientConnected()
 void qmlConnect::slotServerConnected()
 {
     qDebug()<<"slotConnected";
-    IsConnected=true;
+    IsConnected = true;
     if(registration)
     {
 
@@ -125,15 +125,16 @@ void qmlConnect::registrationForm()
     fldLogin=viewer->findChild<QObject*>("logRegField");
     fldPassword=viewer->findChild<QObject*>("pswRegField");
 
-    QString ip, log, passw;
+    QString ip, log, passw, name;
+    name = (fldName->property("text")).toString();
     log=(fldLogin->property("text")).toString();
     ip=(fldIP->property("text")).toString();
     passw = (fldPassword->property("text")).toString();
     myLogin=log;
 
-    if(IsLogStatusOk(log,passw) && !IsConnected)
+    if(IsLogStatusOk(log,passw) && !IsConnected && (IsNameStatusOk(name)))
     {
-
+        IsConnected = true;
        // OpenClientDB();
         CreateConnection(ip);
 
@@ -169,7 +170,7 @@ void qmlConnect::messageForm()
         if(!message.isEmpty())
         {
             dbClient->InsertSendMessage(log, message, QDateTime::currentDateTime());
-            client->SendMessageToClient(log,message);
+            client->SendMessageToClient(log,message, QDateTime::currentDateTime());
         }
 }
 void qmlConnect::chooseFile(const QUrl& url)
@@ -185,10 +186,11 @@ void qmlConnect::chooseFile(const QUrl& url)
 }
 void qmlConnect::slotServerError(const QString& errorCode)
 {
+    IsConnected = false;
+    registration = false;
     qDebug()<<"server error";
     if(rctError)
         rctError->setProperty("visible", true);
-    //IsConnected = false;
     QObject* txtError=viewer->findChild<QObject*>("txtError");
     txtError->setProperty("text",errorCode);
 }
@@ -222,6 +224,7 @@ void qmlConnect::messageList(const QString & log)
 void qmlConnect::slotRegistrationError(ServerError errorCode)
 {
     QObject* txtError=viewer->findChild<QObject*>("txtError");
+    registration = false;
     switch(errorCode)
     {
         case ServerError::Success:
@@ -370,6 +373,25 @@ bool qmlConnect::IsLogStatusOk(const QString & login, const QString& passw)
         txtError->setProperty("text","Пароль слишком длинный!");
         return false;
     }
-
+    return true;
+}
+bool qmlConnect::IsNameStatusOk(const QString & login)
+{
+    QObject* txtError=viewer->findChild<QObject*>("txtError");
+    if (login.length()<3)
+    {
+        txtError->setProperty("text","Логин слишком короткий");
+        return false;
+    }
+    if (login.length()>20)
+    {
+        txtError->setProperty("text","Логин слишком длинный!");
+        return false;
+    }
+    if(IsForbidSign(login))
+    {
+        txtError->setProperty("text","Присутствуют запрещенные символы");
+        return false;
+    }
     return true;
 }
