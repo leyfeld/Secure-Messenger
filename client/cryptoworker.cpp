@@ -112,4 +112,9 @@ QByteArray CryptoWorker::GetKey(const QString &login)
     return skey;
 }
 
+void CryptoWorker::SetMapForTest(QMap<QString, QByteArray> &secretkey)
+{
+    m_secretkey = secretkey;
+}
+
 

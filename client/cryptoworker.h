@@ -21,6 +21,7 @@ public:
     QByteArray GetPublicKey();
     void DeleteNameFromMap(const QString& name);
     QByteArray GetKey(const QString& login);
+    void SetMapForTest(QMap <QString, QByteArray >& secretkey);
 private:
     QByteArray m_iv;
     std::unique_ptr<DH, void(*)(DH*)> m_dh;
